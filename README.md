@@ -1,6 +1,6 @@
 # Statistique-Exploratoire-Spatiale-2025-2026
 
-Le cours de Statistique Exploratoire Spatiale est dispense par Mr Hema Aboubacar, [Analyste de Recherche a IFPRI](https://www.ifpri.org/profile/aboubacar-hema/) aux etudiants de l'[ENSAE - Dakar](https://www.ensae.sn/).
+Le cours de Statistique Exploratoire Spatiale est dispensé par Mr Hema Aboubacar, [Analyste de Recherche à IFPRI](https://www.ifpri.org/profile/aboubacar-hema/) aux etudiants de l'[ENSAE - Dakar](https://www.ensae.sn/).
 
 ## License
 This course material is licensed under a Creative Commons Attribution 4.0 International (CC BY 4.0). You are free to re-use and adapt the material but are required to give appropriate credit to the original author as below:
