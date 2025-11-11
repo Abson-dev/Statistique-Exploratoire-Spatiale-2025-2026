@@ -1,0 +1,172 @@
+
+///////////////////////////////////////////////////////////////////////////////////////////////
+////      ECOLE NATIONALE DE LA STATISTIQUE ET DE L'ANALYSE ECONOMIQUE PIERRE NDIAYE     /////
+////          COURS DE STATISTIQUES EXPLORATOIRE ET SPATIALE - ISE1_CYCLE LONG          /////
+////                           ENSEIGNANT: MR HEMA                                     /////
+////                   TP1_GOOGLE EARTH ENGINE AVEC JAVASCRIPT 
+////                   PAYS : CAMEROUN
+////                  MEMBRES: 		AGNANMA David  
+					DIOP AStou                     	             /////
+////                           		DIOP Marème  
+					NGAKE YAMAHA Herman Parfait                 /////
+////                           N                                                   /////
+////                                                                              /////
+//////////////////////////////////////////////////////////////////////////////////////
+
+
+----- Script 3 ----------
+
+
+Présentation d'une carte interactive du Cameroun où l’on peut :
+Visualiser la densité de population et les cas de paludisme ;
+Changer l’année du paludisme à l’aide du curseur ;
+Observer les découpages administratifs du pays.
+
+
+
+
+// ----------------------
+// Charger les données
+// ----------------------
+var pays = ee.FeatureCollection("projects/formationgee/assets/shapefile_pays_cameroun");
+var regions = ee.FeatureCollection("projects/formationgee/assets/shapefile_regions_cameroun");
+var departements = ee.FeatureCollection("projects/formationgee/assets/shapefile_departements_cameroun");
+var arrondissements = ee.FeatureCollection("projects/formationgee/assets/shapefile_arrondissements_cameroun");
+var worldpop = ee.Image("projects/formationgee/assets/tiff_Worldpop");
+
+// Charger les images malaria 2000-2021
+var malariaImages = [];
+for (var year = 2000; year <= 2021; year++) {
+  var path = "projects/formationgee/assets/202508_Global_Pf_Incidence_Count_CMR_" + year;
+  malariaImages.push(ee.Image(path));
+}
+
+// Image malaria par défaut (2005)
+var currentMalaria = malariaImages[5].select([0]);
+
+
+// ----------------------
+// Afficher les propriétés des objets
+// ----------------------
+
+// --- Shapefiles ---
+print("propriétés du shapefile Pays :", pays);
+print("Propriétés du shapefile Régions :", regions);
+print("Propriétés du shapefile Départements :", departements);
+print("Propriétés du shapefile Arrondissements :", arrondissements);
+
+// --- Raster Population ---
+print("Propriétés du raster Population (WorldPop) :", worldpop);
+print("Projection WorldPop :", worldpop.projection());
+print("Taille des pixels (résolution) WorldPop :", worldpop.projection().nominalScale());
+
+// --- Rasters Malaria ---
+print("Exemple propriétés raster Malaria (année 2000) :", malariaImages[0]);
+print("Projection Malaria 2000 :", malariaImages[0].projection());
+print("Taille des pixels Malaria 2000 :", malariaImages[0].projection().nominalScale());
+
+
+
+// ----------------------
+//  Paramètres de visualisation
+// ----------------------
+var popViz = {
+  min: 0, max: 500,
+  palette: [
+    'ffffe5','fff7bc','fee391','fec44f','fe9929',
+    'ec7014','cc4c02','993404','662506'
+  ]
+};
+
+var malariaViz = {
+  min: 0, max: 100,
+  palette: [
+    '440154','482878','3e4989','31688e','26828e',
+    '1f9e89','35b779','6ece58','b5de2b','fde725'
+  ]
+};
+
+// Styles vecteurs
+var paysStyle = pays.style({color: '000000', fillColor: '00000000', width: 2});
+var regionStyle = regions.style({color: '2d2d2d', fillColor: '00000000', width: 1.5});
+var depStyle = departements.style({color: '0077b6', fillColor: '00000000', width: 1});
+var arrStyle = arrondissements.style({color: '999999', fillColor: '00000000', width: 0.5});
+
+// ----------------------
+// Interface utilisateur
+// ----------------------
+var controlPanel = ui.Panel({
+  style: {position: 'top-left', padding: '8px', backgroundColor: 'white', width: '240px'}
+});
+
+controlPanel.add(ui.Label('Année du paludisme :'));
+
+// Barre coulissante (slider) pour choisir l’année
+var yearSlider = ui.Slider({
+  min: 2000,
+  max: 2021,
+  value: 2000,
+  step: 1,
+  style: {stretch: 'horizontal'},
+  onChange: function(year) {
+    updateMalariaLayer(parseInt(year));
+  }
+});
+controlPanel.add(yearSlider);
+
+// ----------------------
+// Légendes simples
+// ----------------------
+function makeLegend(title, palette, min, max) {
+  var legend = ui.Panel({style: {padding: '8px', backgroundColor: 'white'}});
+  legend.add(ui.Label(title, {fontWeight: 'bold'}));
+
+  var colorBar = ui.Thumbnail({
+    image: ee.Image.pixelLonLat().select(0)
+      .multiply((max - min) / 100)
+      .add(min)
+      .visualize({min: min, max: max, palette: palette}),
+    params: {bbox: [0, 0, 100, 10], dimensions: '100x10'},
+    style: {stretch: 'horizontal', margin: '4px 0'}
+  });
+  legend.add(colorBar);
+  legend.add(ui.Label(min + ' ← valeurs → ' + max));
+  return legend;
+}
+
+var legendPop = makeLegend('Population (densité)', popViz.palette, popViz.min, popViz.max);
+legendPop.style().set({position: 'bottom-left'});
+Map.add(legendPop);
+
+var legendMal = makeLegend('Paludisme (intensité)', malariaViz.palette, malariaViz.min, malariaViz.max);
+legendMal.style().set({position: 'bottom-left'});
+Map.add(legendMal);
+
+Map.add(controlPanel);
+
+// ----------------------
+// Fonction mise à jour malaria
+// ----------------------
+function updateMalariaLayer(year) {
+  // Supprimer ancienne couche malaria
+  var layers = Map.layers();
+  for (var i = layers.length - 1; i >= 0; i--) {
+    if (layers.get(i).getName().indexOf('Malaria') !== -1)
+      Map.remove(layers.get(i));
+  }
+  // Ajouter nouvelle couche
+  var yearIndex = year - 2000;
+  currentMalaria = malariaImages[yearIndex].select([0]);
+  Map.addLayer(currentMalaria, malariaViz, 'Malaria ' + year);
+}
+
+// ----------------------
+// Initialisation carte
+// ----------------------
+Map.centerObject(pays, 6);
+Map.addLayer(worldpop, popViz, 'Population 2020');
+Map.addLayer(currentMalaria, malariaViz, 'Malaria 2000');
+Map.addLayer(arrStyle, {}, 'Limites Arrondissements');
+Map.addLayer(depStyle, {}, 'Limites Départements');
+Map.addLayer(regionStyle, {}, 'Limites Régions');
+Map.addLayer(paysStyle, {}, 'Limites Pays');

@@ -1,0 +1,124 @@
+
+///////////////////////////////////////////////////////////////////////////////////////////////
+////      ECOLE NATIONALE DE LA STATISTIQUE ET DE L'ANALYSE ECONOMIQUE PIERRE NDIAYE     /////
+////          COURS DE STATISTIQUES EXPLORATOIRE ET SPATIALE - ISE1_CYCLE LONG          /////
+////                           ENSEIGNANT: MR HEMA                                     /////
+////                   TP1_GOOGLE EARTH ENGINE AVEC JAVASCRIPT 
+////                   PAYS : CAMEROUN
+////                  MEMBRES: 		AGNANMA David  
+					DIOP AStou                     	             /////
+////                           		DIOP Marème  
+					NGAKE YAMAHA Herman Parfait                 /////
+////                           N                                                   /////
+////                                                                              /////
+//////////////////////////////////////////////////////////////////////////////////////
+
+
+----- Script 2  ----------
+
+
+---- Le script2, c'est là où sont affichés les propriétés des différents types de fichiers (Shapefile et Rasters).
+
+
+
+
+
+
+
+
+// Déclaration du chemin de base de vos Assets
+var BASE_PATH = 'projects/initiation-476717/assets/';
+
+// 1. Shapefiles GADM (Collections d'entités vectorielles)
+var GADM_L0 = ee.FeatureCollection(BASE_PATH + 'gadm41_CMR_0');
+var GADM_L1 = ee.FeatureCollection(BASE_PATH + 'gadm41_CMR_1');
+var GADM_L2 = ee.FeatureCollection(BASE_PATH + 'gadm41_CMR_2');
+var GADM_L3 = ee.FeatureCollection(BASE_PATH + 'gadm41_CMR_3');
+// 2. Raster (Image) - Données de Malaria/Population
+var CMR_RASTER = ee.Image(BASE_PATH + 'cmr_level0_100m_2000_2020');
+
+print('--- Propriétés des Shapefiles GADM ---');
+
+// Affichage des propriétés de GADM Niveau 0 (Frontière nationale)
+print('GADM Niveau 0 (Frontière) :');
+print('   - Dimension (Nombre d\'entités) :', GADM_L0.size());
+print('   - Projection (CRS) :', GADM_L0.first().geometry().projection());
+
+
+// Affichage des propriétés de GADM Niveau 1 (Régions)
+print('GADM Niveau 1 (Régions) :');
+print('   - Dimension (Nombre d\'entités) :', GADM_L1.size());
+print('   - Projection (CRS) :', GADM_L1.first().geometry().projection());
+
+
+// Affichage des propriétés de GADM Niveau 2 (Départements/Préfectures)
+print('GADM Niveau 2 (Départements) :');
+print('   - Dimension (Nombre d\'entités) :', GADM_L2.size());
+print('   - Projection (CRS) :', GADM_L2.first().geometry().projection());
+
+
+// Affichage des propriétés de GADM Niveau 3 (Arrondissements/Sous-préfectures)
+print('GADM Niveau 3 (Arrondissements) :');
+print('   - Dimension (Nombre d\'entités) :', GADM_L3.size());
+print('   - Projection (CRS) :', GADM_L3.first().geometry().projection());
+
+
+
+
+print('--- Propriétés du Raster (Malaria/WorldPop) ---');
+
+// 1. Métadonnées de l'Image complète
+
+print('Objet Raster complet (Métadonnées) :', CMR_RASTER);
+
+// 2. Dimensions (Bandes)
+// Les bandes représentent souvent différentes années (2000, 2001, ..., 2020) ou variables.
+print('   - Noms des Bandes (Dimensions) :', CMR_RASTER.bandNames());
+
+// 3. Projection (CRS)
+var rasterProjection = CMR_RASTER.projection();
+print('   - Projection (CRS) :', rasterProjection);
+
+// 4. Taille des Pixels (Résolution)
+// Utilise nominalScale() pour obtenir la résolution en mètres.
+print('   - Taille des Pixels (Résolution nominale en mètres) :', rasterProjection.nominalScale());
+
+
+// Récupération de la géométrie de la frontière du Cameroun (GADM_L0) pour les calculs de Raster.
+var cameroonBoundary = GADM_L0.first().geometry();
+
+
+// 5. Mesures spatiales converties en KM et KM²
+
+var cmrAreaSqM = cameroonBoundary.area();
+var cmrPerimeterM = cameroonBoundary.perimeter();
+
+// Conversion en km² et km 
+var cmrAreaSqKm = cmrAreaSqM.divide(1e6); // 1 000 000
+var cmrPerimeterKm = cmrPerimeterM.divide(1e3); // 1 000
+
+print('   - Périmètre de la zone de couverture (km) :', cmrPerimeterKm);
+print('   - Superficie de la zone de couverture (km²) :', cmrAreaSqKm);
+print('   - Centroïde du Raster (Coordonnées) :', cameroonBoundary.centroid());
+
+
+// 6. Calcul du nombre de pixels
+var rasterProjection = CMR_RASTER.projection();
+var nominalScale = rasterProjection.nominalScale();
+
+var numPixels = CMR_RASTER.select([0]).reduceRegion({
+  reducer: ee.Reducer.count(),
+  geometry: cameroonBoundary,
+  scale: nominalScale,
+  maxPixels: 1e13 
+}).get(CMR_RASTER.bandNames().get(0));
+
+print('   - Nombre total de Pixels :', numPixels);
+
+
+
+
+
+
+
+
