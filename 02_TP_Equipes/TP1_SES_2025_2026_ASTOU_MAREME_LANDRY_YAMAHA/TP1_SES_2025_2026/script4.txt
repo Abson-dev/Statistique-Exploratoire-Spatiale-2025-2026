@@ -1,0 +1,362 @@
+///////////////////////////////////////////////////////////////////////////////////////////////
+////      ECOLE NATIONALE DE LA STATISTIQUE ET DE L'ANALYSE ECONOMIQUE PIERRE NDIAYE     /////
+////          COURS DE STATISTIQUES EXPLORATOIRE ET SPATIALE - ISE1_CYCLE LONG          /////
+////                           ENSEIGNANT: MR HEMA                                     /////
+////                   TP1_GOOGLE EARTH ENGINE AVEC JAVASCRIPT 
+////                   PAYS : Cameroun
+////                  MEMBRES: AGNANMA SANAM David Landry                             /////
+////                           DIOP Astou                                            /////
+////                           DIOP Mareme                                          /////
+////                           NGAKE YAMAHA Herman Parfait                         /////
+//////////////////////////////////////////////////////////////////////////////////////
+
+
+
+
+
+
+
+
+// Visualisation des données de taux de parasites Pf au Cameroun (2000-2024)
+// Google Earth Engine JavaScript Code
+ 
+// Définir les paramètres
+var anneeDebut = 2000;
+var anneeFin = 2024;
+var baseAssetPath = 'projects/initiation-476717/assets/202508_Global_Pf_Parasite_Rate_CMR_';
+
+// Charger les limites des régions du Cameroun
+var regions = ee.FeatureCollection('projects/initiation-476717/assets/gadm41_CMR_1');
+
+// Taux de prévalence nationaux (données officielles)
+var tauxNationaux = {
+  2000: 39.79, 2001: 46.46, 2002: 48.87, 2003: 48.31, 2004: 47.06,
+  2005: 46.82, 2006: 46.82, 2007: 45.67, 2008: 41.51, 2009: 32.80,
+  2010: 25.10, 2011: 21.71, 2012: 21.26, 2013: 22.86, 2014: 23.22,
+  2015: 23.02, 2016: 22.86, 2017: 21.62, 2018: 20.29, 2019: 20.01,
+  2020: 21.69, 2021: 22.60, 2022: 22.69, 2023: 22.77, 2024: 22.78
+};
+
+// Vérifier le chargement des régions
+print('Régions chargées:', regions.limit(1));
+
+// PALETTE MISE À JOUR : Du Bleu/Violet (faible) au Jaune vif (élevé)
+var palette = [
+  '#0d0887', // Bleu foncé (Min)
+  '#46039f',
+  '#7205a2',
+  '#9c179e',
+  '#bd3786',
+  '#d8576b',
+  '#ed7953',
+  '#fb9f3a',
+  '#fde725' // Jaune vif (Max)
+];
+
+// Paramètres de visualisation
+var visParams = {
+  min: 0,
+  max: 1,
+  palette: palette,
+  opacity: 0.8
+};
+
+// Centrer la carte sur le Cameroun
+Map.setCenter(12.3547, 6.0, 6);
+
+// Créer un panneau de contrôle
+var panel = ui.Panel({
+  style: {
+    position: 'top-left',
+    padding: '8px',
+    width: '350px',
+    maxHeight: '90%'
+  }
+});
+
+// Titre du panneau
+var titre = ui.Label({
+  value: 'Visualisation temporelle - Paludisme',
+  style: {
+    fontSize: '18px',
+    fontWeight: 'bold',
+    margin: '0 0 10px 0'
+  }
+});
+panel.add(titre);
+
+// Label pour afficher les statistiques nationales
+var statsLabel = ui.Label({
+  value: 'Sélectionnez une année...',
+  style: {
+    fontSize: '13px',
+    padding: '8px',
+    backgroundColor: '#f0f0f0',
+    margin: '0 0 10px 0',
+    whiteSpace: 'pre'
+  }
+});
+panel.add(statsLabel);
+
+// Panneau scrollable pour les statistiques régionales
+var regionTitre = ui.Label({
+  value: 'Statistiques par région',
+  style: {
+    fontSize: '14px',
+    fontWeight: 'bold',
+    margin: '10px 0 5px 0'
+  }
+});
+panel.add(regionTitre);
+
+var regionPanel = ui.Panel({
+  style: {
+    maxHeight: '250px',
+    padding: '5px',
+    backgroundColor: '#ffffff',
+    border: '1px solid #ccc',
+    margin: '0 0 10px 0'
+  }
+});
+panel.add(regionPanel);
+
+// Fonction pour calculer les statistiques nationales et régionales
+function calculerStatsNationales(image, annee) {
+  // Utiliser le taux national officiel
+  var moyenneNationale = tauxNationaux[annee];
+  
+  // Calculer les stats régionales pour avoir min/max
+  var statsRegionales = image.reduceRegions({
+    collection: regions,
+    reducer: ee.Reducer.mean(),
+    scale: 8000
+  });
+  
+  statsRegionales.evaluate(function(result) {
+    if (result && result.features && result.features.length > 0) {
+      // Extraire min et max des régions
+      var valeursRegionales = [];
+      result.features.forEach(function(feature) {
+        var val = feature.properties.mean;
+        if (val !== null && val !== undefined && !isNaN(val)) {
+          valeursRegionales.push(val);
+        }
+      });
+      
+      if (valeursRegionales.length > 0) {
+        var min = Math.min.apply(null, valeursRegionales);
+        var max = Math.max.apply(null, valeursRegionales);
+        
+        var minPct = (min * 100).toFixed(2);
+        var maxPct = (max * 100).toFixed(2);
+        
+        var texte = 'Année ' + annee + '\n' +
+                    '━━━━━━━━━━━━━━━━━━━━\n' +
+                    'Moyenne nationale: ' + moyenneNationale.toFixed(2) + '%\n' +
+                    'Min région: ' + minPct + '% | Max région: ' + maxPct + '%';
+        
+        statsLabel.setValue(texte);
+      } else {
+        statsLabel.setValue('Année ' + annee + '\nErreur: pas de données régionales');
+      }
+    } else {
+      statsLabel.setValue('Année ' + annee + '\nErreur de calcul');
+    }
+  });
+}
+
+// Fonction pour calculer les statistiques par région
+function calculerStatsRegionales(image, annee) {
+  regionPanel.clear();
+  regionPanel.add(ui.Label({
+    value: 'Calcul en cours...',
+    style: {fontSize: '12px', color: '#666'}
+  }));
+  
+  var statsParRegion = image.reduceRegions({
+    collection: regions,
+    reducer: ee.Reducer.mean(),
+    scale: 8000
+  });
+  
+  statsParRegion.evaluate(function(result) {
+    regionPanel.clear();
+    
+    if (result && result.features && result.features.length > 0) {
+      // Trier par valeur décroissante
+      var features = result.features.sort(function(a, b) {
+        var valA = a.properties.mean || 0;
+        var valB = b.properties.mean || 0;
+        return valB - valA;
+      });
+      
+      features.forEach(function(feature) {
+        var nom = feature.properties.NAME_1 || 'Sans nom';
+        var valeur = feature.properties.mean;
+        
+        if (valeur !== null && valeur !== undefined && !isNaN(valeur)) {
+          var pourcentage = (valeur * 100).toFixed(2);
+          
+          var label = ui.Label({
+            value: nom + ': ' + pourcentage + '%',
+            style: {
+              fontSize: '12px',
+              padding: '3px 5px',
+              margin: '2px 0',
+              backgroundColor: '#f9f9f9'
+            }
+          });
+          regionPanel.add(label);
+        }
+      });
+    } else {
+      regionPanel.add(ui.Label({
+        value: 'Aucune donnée disponible',
+        style: {fontSize: '12px', color: '#999'}
+      }));
+    }
+  });
+}
+
+// Fonction pour afficher une année
+function afficherAnnee(annee) {
+  var assetPath = baseAssetPath + annee;
+  var image = ee.Image(assetPath);
+  var imageBande = image.select('b1');
+  
+  // Effacer les couches précédentes
+  Map.layers().reset();
+  
+  // Ajouter la couche de données
+  Map.addLayer(imageBande, visParams, 'Taux Pf ' + annee);
+  
+  // Ajouter les contours des régions
+  Map.addLayer(regions, {color: '000000', fillColor: '00000000'}, 'Régions', true, 0.5);
+  
+  // Calculer les statistiques
+  calculerStatsNationales(imageBande, annee);
+  calculerStatsRegionales(imageBande, annee);
+}
+
+// Slider pour sélectionner l'année
+var anneeLabel = ui.Label('Année: ' + anneeDebut);
+panel.add(anneeLabel);
+
+var slider = ui.Slider({
+  min: anneeDebut,
+  max: anneeFin,
+  value: anneeDebut,
+  step: 1,
+  style: {stretch: 'horizontal'}
+});
+
+slider.onChange(function(annee) {
+  anneeLabel.setValue('Année: ' + Math.round(annee));
+  afficherAnnee(Math.round(annee));
+});
+
+panel.add(slider);
+
+// Variable globale pour contrôler l'animation
+var animationEnCours = false;
+
+// Bouton de lecture automatique
+var playButton = ui.Button({
+  label: '▶ Lecture automatique',
+  onClick: function() {
+    if (!animationEnCours) {
+      // Démarrer l'animation
+      animationEnCours = true;
+      playButton.setLabel('⏸ Pause');
+      
+      var anneeActuelle = Math.round(slider.getValue());
+      
+      var animer = function() {
+        if (!animationEnCours) return;
+        
+        anneeActuelle++;
+        
+        // Arrêter à la fin au lieu de boucler
+        if (anneeActuelle > anneeFin) {
+          animationEnCours = false;
+          playButton.setLabel('▶ Lecture automatique');
+          return;
+        }
+        
+        slider.setValue(anneeActuelle);
+        
+        // Continuer l'animation après un délai
+        if (animationEnCours) {
+          ui.util.setTimeout(animer, 5000);
+        }
+      };
+      
+      // Démarrer après un délai initial
+      ui.util.setTimeout(animer, 5000);
+      
+    } else {
+      // Arrêter l'animation
+      animationEnCours = false;
+      playButton.setLabel('▶ Lecture automatique');
+    }
+  }
+});
+
+panel.add(playButton);
+
+// Légende
+var legende = ui.Panel({
+  style: {
+    padding: '8px 15px',
+    margin: '10px 0 0 0'
+  }
+});
+
+var legendeTitre = ui.Label({
+  value: 'Taux de parasites Pf (Bleu → Jaune)',
+  style: {
+    fontWeight: 'bold',
+    fontSize: '14px',
+    margin: '0 0 4px 0'
+  }
+});
+legende.add(legendeTitre);
+
+// Créer les éléments de la légende
+var valeursTexte = ['0%', '12.5%', '25%', '37.5%', '50%', '62.5%', '75%', '87.5%', '100%'];
+for (var i = 0; i < palette.length; i++) {
+  var colorBox = ui.Label({
+    style: {
+      backgroundColor: palette[i],
+      padding: '8px',
+      margin: '2px 8px 2px 0',
+      width: '40px',
+      height: '15px'
+    }
+  });
+  
+  // Ajustement de la description pour éviter l'indexation hors limite (valeursTexte[i+1])
+  var description = ui.Label({
+    value: valeursTexte[i] + ' - ' + (valeursTexte[i+1] ? valeursTexte[i+1] : '>'),
+    style: {margin: '4px 0', fontSize: '12px'}
+  });
+  
+  var row = ui.Panel({
+    widgets: [colorBox, description],
+    layout: ui.Panel.Layout.Flow('horizontal')
+  });
+  
+  legende.add(row);
+}
+
+panel.add(legende);
+
+// Ajouter le panneau à la carte
+ui.root.insert(0, panel);
+
+// Afficher la première année par défaut
+afficherAnnee(anneeDebut);
+
+// Afficher un message de confirmation
+print('Interface chargée avec succès avec la nouvelle palette Bleu au Jaune!');
+print('Années disponibles: ' + anneeDebut + '-' + anneeFin);
