@@ -93,7 +93,7 @@ TP2_SES_2025_2026_ASTOU_MAREME_LANDRY_YAMAHA/
 ### 4.1 `main.R` 
 
 **Objectif :** 
-Importer l'ensemble des packages, définir le répertoire de travail et exécuter les autres scripts : c'est le script principal.
+Importer et charger l'ensemble des packages nécessaires, définir le répertoire de travail et exécuter les autres scripts : c'est le script principal.
 
 ### 4.2 `Visualisation_Cours d'eau.R` 
 
@@ -333,6 +333,7 @@ Fournir un tableau de bord interactif pour la planification stratégique.
 
 
 ---
+
 
 
 
