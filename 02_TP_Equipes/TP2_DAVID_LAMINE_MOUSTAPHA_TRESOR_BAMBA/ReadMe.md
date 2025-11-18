@@ -100,7 +100,7 @@ TP1_DAVID_MOUSTAPHA_LAMINE_BAMBA_ISE1_CL_2025_2026/
 │       └── wdpa_par_region.xlsx
 └── docs/
     └── README.md
-
+Voici le lien pour acceder aux assets de GEE: https://code.earthengine.google.com/15443c88645713062ee55faf52e4e721
 
 ```
 
@@ -134,4 +134,5 @@ identifier les zones sous-équipées.
 ## Licence
 Projet académique.
 ```
+
 
