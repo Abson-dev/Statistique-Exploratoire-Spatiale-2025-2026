@@ -1,4 +1,4 @@
-# Projet Analyse Spatiale du Cameroun
+# TP2 d'analyse spatiale du Cameroun
 
 ## Participants
 
@@ -327,6 +327,7 @@ Fournir un tableau de bord interactif pour la planification stratégique.
 
 
 ---
+
 
 
 
