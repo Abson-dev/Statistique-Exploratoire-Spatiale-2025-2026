@@ -61,7 +61,7 @@ library(RColorBrewer)
 TP2_SES_2025_2026_ASTOU_MAREME_LANDRY_YAMAHA/
 │
 │
-└── scripts/
+├── scripts/
 │    ├── script1.R
 │    ├── script2.R
 │    ├── visualisation_Aires protégées.R
@@ -327,5 +327,6 @@ Fournir un tableau de bord interactif pour la planification stratégique.
 
 
 ---
+
 
 
