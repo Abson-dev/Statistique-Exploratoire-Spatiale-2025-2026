@@ -6,6 +6,8 @@ L'analyse utilise des données géospatiales pour cartographier et comprendre la
 
 ## Réalisation de : Herman YAMAHA
 
+## Sous la supervision : M. HEMA
+
 **Classe :** ISE1 CL
 **Année académique :** 2025-2026
 
@@ -84,4 +86,5 @@ Les analyses ont permis de :
 ## Licence
 Projet académique.
 ```
+
 
