@@ -1,13 +1,14 @@
 # TP2 d'analyse spatiale du Cameroun
 
-## Participants
-
+## Membres de l'équipe : 
 - AGNANGMA SANAM David Landry
 - DIOP Astou
 - DIOP Mareme
 - NGAKE YAMAHA Herman Parfait
 
-**Encadrant :** M. HEMA
+**Superviseur :** M. HEMA
+
+**Année académique : 2025 - 2026**
 
 ---
 
@@ -327,6 +328,7 @@ Fournir un tableau de bord interactif pour la planification stratégique.
 
 
 ---
+
 
 
 
