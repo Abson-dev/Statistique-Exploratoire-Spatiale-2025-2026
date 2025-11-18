@@ -66,8 +66,8 @@ TP2_SES_2025_2026_ASTOU_MAREME_LANDRY_YAMAHA/
 ├── outputs/
 │   └── cartes, base de données et tableaux de bord (PNG, HTML, CSV)
 │
-└── Scripts/
-│     ├── script1.R
+├── Scripts/
+│    ├── script1.R
 │    ├── script2.R
 │    ├── visualisation_Aires protégées.R
 │    ├── Visualisation_Grandes_villes.R
@@ -321,10 +321,11 @@ Fournir un tableau de bord interactif pour la planification stratégique.
 
 **Remarques :**
 
-- Les shapefiles OSM peuvent contenir des incohérences ou des éléments hors frontières nationales.
-- L'utilisation de GADM permet d'avoir des limites administratives harmonisées.
+- Les shapefiles OSM contiennent des éléments hors frontières nationales.
+- L'utilisation de GADM a permis d'avoir des limites administratives harmonisées.
 
 ---
 
 
 ---
+
