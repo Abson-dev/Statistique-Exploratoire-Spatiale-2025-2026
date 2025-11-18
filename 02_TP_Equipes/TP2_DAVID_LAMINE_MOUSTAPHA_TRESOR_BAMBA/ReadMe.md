@@ -1,6 +1,6 @@
 # Analyse de la repartition spatiale des services Sociaux de Base au Tchad
 
-## Description du ProjetS
+## Description du Projet
 Ce projet analyse la répartition spatiale des infrastructures essentielles au Tchad.
 L’objectif est de cartographier et d’étudier la localisation des cliniques, des pharmacies, 
 des écoles, du réseau routier et des principaux points d’intérêt afin de comprendre 
@@ -134,3 +134,4 @@ identifier les zones sous-équipées.
 ## Licence
 Projet académique.
 ```
+
