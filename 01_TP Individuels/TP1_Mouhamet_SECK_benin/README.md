@@ -10,7 +10,7 @@ Il porte sur l’importation, l’exploration et la visualisation de données g�
 ---
 
 ## 📂 Structure du projet
-
+```
 TP1/
 │
 ├── data/
@@ -20,7 +20,7 @@ TP1/
 │
 ├── TP1_Mouhamet_SECK.ipynb # Notebook d'analyse
 └── README.md # Documentation du TP
-
+```
 
 ---
 
@@ -62,4 +62,5 @@ TP1/
 - **Malaria Atlas Project (MAP)** : https://data.malariaatlas.org  
 
 ---
+
 
