@@ -16,7 +16,7 @@
 
 Ce projet vise à réaliser une **analyse spatiale du Cameroun** en utilisant diverses sources de données géospatiales. L'objectif principal est de générer des visualisations thématiques, statiques et interactives sur les infrastructures sociales, les localités, les aires protégées, la population, les réseaux d'eau et les reseaux de transport. Les données proviennent essentiellement de **OpenStreetMap (OSM)** et de **Protected Planet**, avec une utilisation complémentaire des shapefiles GADM pour les limites administratives.
 
-Le projet comprend plusieurs scripts R pour le traitement et la visualisation des données ainsi que des applications interactives Shiny. Les analyses permettent de visualiser la distribution des écoles, hôpitaux, grandes villes, etc. et de produire des cartes stratégiques pour la planification et la prise de décision.
+Le projet comprend plusieurs scripts R pour le traitement et la visualisation des données ainsi qu'une application interactive Shiny et un tableau de bord. Les analyses permettent de visualiser la distribution des écoles, hôpitaux, grandes villes, etc. et de produire des cartes stratégiques pour la planification et la prise de décision.
 
 ---
 
@@ -84,7 +84,7 @@ TP2_SES_2025_2026_ASTOU_MAREME_LANDRY_YAMAHA/
 - **TP1_SES_2025_2026_ASTOU_MAREME_LANDRY_YAMAHA.Rproj** est le projet R que nous avons créé pour l'ensemble des travaux de notre équipe.
 - Le dossier **outputs** contient l'ensemble de nos cartes statiques et dynamiques, un tableau de bord et un fichier csv récapitulant l'ensemble de nos analyses.
 - Le dossier **data** qui contient l'ensemble des données que nous avons utilisé pour nos analyses.
-- Ces deux dossiers sont contenus dans un drive dont le lien est le suivant : https://drive.google.com/drive/my-drive), du fait de leur taille, qui excède la limite de GitHub. Cependant, vous pouvez les télécharger et les mettre dans le dossier **TP1_SES_2025_2026_ASTOU_MAREME_LANDRY_YAMAHA** pour exécuter les codes.
+- Ces deux dossiers sont contenus dans des drives (les liens sont les suivants : **https://drive.google.com/drive/folders/10_HfUwbJwTG0EV8FzSqUXhYNuweFu1gf** pour **outputs** et **https://drive.google.com/drive/folders/1gFy7kSXb3I1CkNcXMktAhQTf37rinonM** pour **data**) du fait de leur taille, qui excède la limite de GitHub. Cependant, vous pouvez les télécharger et les mettre dans le dossier **TP1_SES_2025_2026_ASTOU_MAREME_LANDRY_YAMAHA** pour exécuter les codes.
 ---
 
 ## 4. Description des scripts
@@ -297,6 +297,8 @@ Carte 9 : Synthèse écoles/pharmacies/villes
 **Objectif :**
 Fournir un tableau de bord interactif pour la planification stratégique.
 
+Une fois les dossiers téléchargés et après avoir exécuté le fichier **main.R**, un chemin d'accès sera demandé pour l'exécution du dernier script **Tableau de bord.R**. Il faudra alors choisir le dossier **data**  téléchargé comme dossier de travail.
+
 **Données utilisées :**
 
 - Couches OSM : villages, villes, équipements sociaux, voies ferrées
@@ -333,6 +335,7 @@ Fournir un tableau de bord interactif pour la planification stratégique.
 
 
 ---
+
 
 
 
