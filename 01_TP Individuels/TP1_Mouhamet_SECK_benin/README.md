@@ -18,6 +18,7 @@ TP1/
 │ ├── worldpop/ # Population 2024 (WorldPop)
 │ └── malaria/ # Rasters MAP 2000–2024 (Malaria Atlas Project)
 │
+├── outputs
 ├── TP1_Mouhamet_SECK.ipynb # Notebook d'analyse
 └── README.md # Documentation du TP
 ```
@@ -62,5 +63,6 @@ TP1/
 - **Malaria Atlas Project (MAP)** : https://data.malariaatlas.org  
 
 ---
+
 
 
