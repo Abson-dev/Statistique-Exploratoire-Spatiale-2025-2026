@@ -61,9 +61,6 @@ library(RColorBrewer)
 TP2_SES_2025_2026_ASTOU_MAREME_LANDRY_YAMAHA/
 │   
 │
-├── outputs/
-│   └── cartes, base de données et tableaux de bord (PNG, HTML, CSV)
-│
 ├── scripts/
 │    ├── script1.R
 │    ├── script2.R
@@ -81,8 +78,9 @@ TP2_SES_2025_2026_ASTOU_MAREME_LANDRY_YAMAHA/
 
 
 **NB :**
-- Le dossier **outputs** contient l'ensemble de nos cartes statiques et dynamiques ainsi qu'un tableau de bord.
-- Le dossier **data** qui contient l'ensemble des données que nous avons utilisé pour nos analyses sont dans un drive (le lien est le suivant : https://drive.google.com/drive/my-drive), vu que la taille du dossier excède la limite de GitHub. Cependant, vous pouvez le télécharger et le mettre dans **TP1_SES_2025_2026_ASTOU_MAREME_LANDRY_YAMAHA** pour exécuter les codes.
+- Le dossier **outputs** contient l'ensemble de nos cartes statiques et dynamiques, un tableau de bord et un fichier csv récapitulant l'ensemble de nos analyses.
+- Le dossier **data** qui contient l'ensemble des données que nous avons utilisé pour nos analyses.
+- Ces deux dossiers sont contenus dans un drive dont le lien est le suivant : https://drive.google.com/drive/my-drive), du fait de leur taille, qui excède la limite de GitHub. Cependant, vous pouvez les télécharger et les mettre dans le dossier **TP1_SES_2025_2026_ASTOU_MAREME_LANDRY_YAMAHA** pour exécuter les codes.
 ---
 
 ## 4. Description des scripts
@@ -326,5 +324,6 @@ Fournir un tableau de bord interactif pour la planification stratégique.
 
 
 ---
+
 
 
