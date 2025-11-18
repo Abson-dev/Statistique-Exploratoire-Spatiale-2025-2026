@@ -90,7 +90,12 @@ TP2_SES_2025_2026_ASTOU_MAREME_LANDRY_YAMAHA/
 ## 4. Description des scripts
 
 
-### 4.1 `Visualisation_Cours d'eau.R` 
+### 4.1 `main.R` 
+
+**Objectif :** 
+Importer l'ensemble des packages, définir le répertoire de travail et exécuter les autres scripts : c'est le script principal.
+
+### 4.2 `Visualisation_Cours d'eau.R` 
 
 **Objectif :**
 Visualiser les lignes des cours d'eau secondaires et des ruisseaux pour évaluer la densité du réseau hydrographique local.
@@ -120,7 +125,7 @@ Visualiser les lignes des cours d'eau secondaires et des ruisseaux pour évaluer
 
 ---
 
-### 4.2 `Visualisation_Fleuves et rivières.R`
+### 4.3 `Visualisation_Fleuves et rivières.R`
 
 **Objectif :** 
 Visualiser le réseau hydrographique principal (fleuves et grandes rivières) et les bassins versants majeurs du Cameroun.
@@ -145,7 +150,7 @@ Carte statique (carte_statique_fleuves_rivieres.png)
 
 ---
 
-### 4.3 `Visualisation_Grandes_villes.R`
+### 4.4 `Visualisation_Grandes_villes.R`
 
 **Objectif :**
 Visualiser la répartition des grandes villes du Cameroun en statique et en dynamique.
@@ -184,7 +189,7 @@ Visualiser la répartition des grandes villes du Cameroun en statique et en dyna
 
 ---
 
-### 4.4 `Visualisation_Hopitaux.R`
+### 4.5 `Visualisation_Hopitaux.R`
 
 **Objectif :**
 Analyser la répartition des hôpitaux et leur accessibilité.
@@ -215,7 +220,7 @@ Analyser la répartition des hôpitaux et leur accessibilité.
 ---
 
 
-### 4.5 `script1.R`
+### 4.6 `script1.R`
 
 **Objectif :**
 Centraliser le chargement initial de toutes les couches géographiques OSM et GADM du Cameroun et générer les six premières cartes thématiques statiques du projet. Ce script combine les fonctionnalités de chargement des données et de visualisation de base.
@@ -242,7 +247,7 @@ Centraliser le chargement initial de toutes les couches géographiques OSM et GA
 ---
 
 
-### 4.6 `script2.R`
+### 4.7 `script2.R`
 
 **Objectif :**
 Ce script R permet d'analyser et visualiser les infrastructures du Cameroun à partir de données OpenStreetMap, en produisant des cartes thématiques professionnelles.
@@ -287,7 +292,7 @@ Carte 9 : Synthèse écoles/pharmacies/villes
 
 ---
 
-### 4.7 `tableau_bord_interactif.R`
+### 4.8 `tableau_bord_interactif.R`
 
 **Objectif :**
 Fournir un tableau de bord interactif pour la planification stratégique.
@@ -328,6 +333,7 @@ Fournir un tableau de bord interactif pour la planification stratégique.
 
 
 ---
+
 
 
 
