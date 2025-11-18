@@ -1,0 +1,333 @@
+// ANALYSE DE L'INCIDENCE DU PALUDISME AU TOGO (2000-2024)
+// Source: Malaria Atlas Project
+
+var YEAR = 2024; // Changez l'année ici (2000-2024)
+var path = "projects/initialisation-478314/assets/";
+
+// 1. IMPORTATION DES SHAPEFILES
+var pays = ee.FeatureCollection(path + "gadm41_TGO_0");
+var regions = ee.FeatureCollection(path + "gadm41_TGO_1");
+var admin2 = ee.FeatureCollection(path + "gadm41_TGO_2");
+
+// 2. IMPORTATION DES RASTERS D'INCIDENCE (2000-2024)
+var incidence_2000 = ee.Image(path + "202508_Global_Pf_Incidence_Rate_TGO_2000").select('b1').multiply(1000);
+var incidence_2001 = ee.Image(path + "202508_Global_Pf_Incidence_Rate_TGO_2001").select('b1').multiply(1000);
+var incidence_2002 = ee.Image(path + "202508_Global_Pf_Incidence_Rate_TGO_2002").select('b1').multiply(1000);
+var incidence_2003 = ee.Image(path + "202508_Global_Pf_Incidence_Rate_TGO_2003").select('b1').multiply(1000);
+var incidence_2004 = ee.Image(path + "202508_Global_Pf_Incidence_Rate_TGO_2004").select('b1').multiply(1000);
+var incidence_2005 = ee.Image(path + "202508_Global_Pf_Incidence_Rate_TGO_2005").select('b1').multiply(1000);
+var incidence_2006 = ee.Image(path + "202508_Global_Pf_Incidence_Rate_TGO_2006").select('b1').multiply(1000);
+var incidence_2007 = ee.Image(path + "202508_Global_Pf_Incidence_Rate_TGO_2007").select('b1').multiply(1000);
+var incidence_2008 = ee.Image(path + "202508_Global_Pf_Incidence_Rate_TGO_2008").select('b1').multiply(1000);
+var incidence_2009 = ee.Image(path + "202508_Global_Pf_Incidence_Rate_TGO_2009").select('b1').multiply(1000);
+var incidence_2010 = ee.Image(path + "202508_Global_Pf_Incidence_Rate_TGO_2010").select('b1').multiply(1000);
+var incidence_2011 = ee.Image(path + "202508_Global_Pf_Incidence_Rate_TGO_2011").select('b1').multiply(1000);
+var incidence_2012 = ee.Image(path + "202508_Global_Pf_Incidence_Rate_TGO_2012").select('b1').multiply(1000);
+var incidence_2013 = ee.Image(path + "202508_Global_Pf_Incidence_Rate_TGO_2013").select('b1').multiply(1000);
+var incidence_2014 = ee.Image(path + "202508_Global_Pf_Incidence_Rate_TGO_2014").select('b1').multiply(1000);
+var incidence_2015 = ee.Image(path + "202508_Global_Pf_Incidence_Rate_TGO_2015").select('b1').multiply(1000);
+var incidence_2016 = ee.Image(path + "202508_Global_Pf_Incidence_Rate_TGO_2016").select('b1').multiply(1000);
+var incidence_2017 = ee.Image(path + "202508_Global_Pf_Incidence_Rate_TGO_2017").select('b1').multiply(1000);
+var incidence_2018 = ee.Image(path + "202508_Global_Pf_Incidence_Rate_TGO_2018").select('b1').multiply(1000);
+var incidence_2019 = ee.Image(path + "202508_Global_Pf_Incidence_Rate_TGO_2019").select('b1').multiply(1000);
+var incidence_2020 = ee.Image(path + "202508_Global_Pf_Incidence_Rate_TGO_2020").select('b1').multiply(1000);
+var incidence_2021 = ee.Image(path + "202508_Global_Pf_Incidence_Rate_TGO_2021").select('b1').multiply(1000);
+var incidence_2022 = ee.Image(path + "202508_Global_Pf_Incidence_Rate_TGO_2022").select('b1').multiply(1000);
+var incidence_2023 = ee.Image(path + "202508_Global_Pf_Incidence_Rate_TGO_2023").select('b1').multiply(1000);
+var incidence_2024 = ee.Image(path + "202508_Global_Pf_Incidence_Rate_TGO_2024").select('b1').multiply(1000);
+
+// Fonction pour obtenir le raster d'une année
+var getRaster = function(year) {
+  if (year === 2000) return incidence_2000;
+  if (year === 2001) return incidence_2001;
+  if (year === 2002) return incidence_2002;
+  if (year === 2003) return incidence_2003;
+  if (year === 2004) return incidence_2004;
+  if (year === 2005) return incidence_2005;
+  if (year === 2006) return incidence_2006;
+  if (year === 2007) return incidence_2007;
+  if (year === 2008) return incidence_2008;
+  if (year === 2009) return incidence_2009;
+  if (year === 2010) return incidence_2010;
+  if (year === 2011) return incidence_2011;
+  if (year === 2012) return incidence_2012;
+  if (year === 2013) return incidence_2013;
+  if (year === 2014) return incidence_2014;
+  if (year === 2015) return incidence_2015;
+  if (year === 2016) return incidence_2016;
+  if (year === 2017) return incidence_2017;
+  if (year === 2018) return incidence_2018;
+  if (year === 2019) return incidence_2019;
+  if (year === 2020) return incidence_2020;
+  if (year === 2021) return incidence_2021;
+  if (year === 2022) return incidence_2022;
+  if (year === 2023) return incidence_2023;
+  if (year === 2024) return incidence_2024;
+};
+
+var currentIncidence = getRaster(YEAR);
+
+// 3. STATISTIQUES NATIONALES
+
+var statsNationales = currentIncidence.reduceRegion({
+  reducer: ee.Reducer.min()
+    .combine({reducer2: ee.Reducer.max(), sharedInputs: true})
+    .combine({reducer2: ee.Reducer.mean(), sharedInputs: true})
+    .combine({reducer2: ee.Reducer.stdDev(), sharedInputs: true}),
+  geometry: pays.geometry(),
+  scale: 1000,
+  maxPixels: 1e13,
+  bestEffort: true
+});
+
+print('Statistiques nationales (cas/1000/an):', statsNationales);
+
+// 4. INCIDENCE PAR RÉGION
+
+var incidenceRegions = currentIncidence.reduceRegions({
+  collection: regions,
+  reducer: ee.Reducer.mean().setOutputs(['incidence'])
+    .combine({reducer2: ee.Reducer.min(), sharedInputs: true})
+    .combine({reducer2: ee.Reducer.max(), sharedInputs: true})
+    .combine({reducer2: ee.Reducer.stdDev(), sharedInputs: true}),
+  scale: 1000
+});
+
+print('Incidence par région:', incidenceRegions.select(['NAME_1', 'incidence', 'min', 'max']));
+
+// 5. INCIDENCE PAR SOUS-PRÉFECTURE
+
+var incidenceAdmin2 = currentIncidence.reduceRegions({
+  collection: admin2,
+  reducer: ee.Reducer.mean().setOutputs(['incidence'])
+    .combine({reducer2: ee.Reducer.min(), sharedInputs: true})
+    .combine({reducer2: ee.Reducer.max(), sharedInputs: true}),
+  scale: 1000
+});
+
+print('Incidence par sous-préfecture:', incidenceAdmin2.select(['NAME_2', 'incidence', 'min', 'max']));
+
+// 6. VISUALISATION CARTOGRAPHIQUE
+
+Map.centerObject(pays, 7);
+
+// Palette de couleurs (jaune → rouge foncé)
+var palette = ['#ffffcc', '#ffeda0', '#fed976', '#feb24c', '#fd8d3c', '#fc4e2a', '#e31a1c', '#bd0026', '#800026'];
+
+// Limites administratives
+Map.addLayer(pays, {color: '000000', fillColor: '00000000', width: 2}, 'Togo', true);
+Map.addLayer(regions, {color: '0000FF', fillColor: '00000000', width: 2}, 'Régions', true);
+Map.addLayer(admin2, {color: '666666', fillColor: '00000000', width: 1}, 'Sous-préfectures', false);
+
+// Visualisation du raster national (pixel par pixel)
+Map.addLayer(currentIncidence.clip(pays), {
+  min: 150,
+  max: 550,
+  palette: palette
+}, 'Incidence nationale ' + YEAR + ' (raster)', true);
+
+// Visualisation agrégée par région
+var empty = ee.Image().byte();
+var regionsColorees = empty.paint({
+  featureCollection: incidenceRegions,
+  color: 'incidence'
+});
+
+Map.addLayer(regionsColorees, {
+  min: 200,
+  max: 350,
+  palette: palette
+}, 'Régions - Incidence moyenne ' + YEAR, false);
+
+// Contours des régions
+Map.addLayer(regions.style({
+  color: '000000',
+  fillColor: '00000000',
+  width: 3
+}), {}, 'Contours régions', true);
+
+// Visualisation agrégée par sous-préfecture
+var admin2Colorees = empty.paint({
+  featureCollection: incidenceAdmin2,
+  color: 'incidence'
+});
+
+Map.addLayer(admin2Colorees, {
+  min: 150,
+  max: 400,
+  palette: palette
+}, 'Sous-préfectures - Incidence ' + YEAR, false);
+
+// Contours des sous-préfectures
+Map.addLayer(admin2.style({
+  color: '333333',
+  fillColor: '00000000',
+  width: 1.5
+}), {}, 'Contours sous-préfectures', false);
+
+// 7. LÉGENDE
+
+var legend = ui.Panel({
+  style: {
+    position: 'bottom-left',
+    padding: '10px 15px',
+    backgroundColor: 'white',
+    border: '2px solid black'
+  }
+});
+
+legend.add(ui.Label({
+  value: 'Incidence du Paludisme (Pf)',
+  style: {fontWeight: 'bold', fontSize: '18px', margin: '0 0 5px 0'}
+}));
+
+legend.add(ui.Label({
+  value: 'cas / 1000 personnes / an',
+  style: {fontSize: '14px', margin: '0 0 5px 0', color: '555'}
+}));
+
+legend.add(ui.Label({
+  value: 'Année: ' + YEAR,
+  style: {fontSize: '13px', margin: '0 0 5px 0', color: '666', fontWeight: 'bold'}
+}));
+
+legend.add(ui.Label({
+  value: 'Source: Malaria Atlas Project',
+  style: {fontSize: '11px', margin: '0 0 10px 0', color: '999'}
+}));
+
+var makeRow = function(color, name) {
+  return ui.Panel({
+    widgets: [
+      ui.Label({style: {backgroundColor: color, padding: '10px', margin: '0 0 3px 0', border: '1px solid #333'}}),
+      ui.Label({value: name, style: {margin: '0 0 3px 6px', fontSize: '13px'}})
+    ],
+    layout: ui.Panel.Layout.Flow('horizontal')
+  });
+};
+
+// Labels pour la légende
+var labels = ['< 200', '200-250', '250-300', '300-350', '350-400', '400-450', '450-500', '500-550', '> 550'];
+
+for (var i = 0; i < palette.length; i++) {
+  legend.add(makeRow(palette[i], labels[i]));
+}
+
+Map.add(legend);
+
+// 8. ÉVOLUTION TEMPORELLE 2000-2024
+
+var toutesAnnees = [2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009,
+                     2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019,
+                     2020, 2021, 2022, 2023, 2024];
+
+var tousRasters = [incidence_2000, incidence_2001, incidence_2002, incidence_2003, incidence_2004,
+                   incidence_2005, incidence_2006, incidence_2007, incidence_2008, incidence_2009,
+                   incidence_2010, incidence_2011, incidence_2012, incidence_2013, incidence_2014,
+                   incidence_2015, incidence_2016, incidence_2017, incidence_2018, incidence_2019,
+                   incidence_2020, incidence_2021, incidence_2022, incidence_2023, incidence_2024];
+
+print('Année | Incidence moyenne (cas/1000/an)');
+print('------|--------------------------------');
+
+for (var i = 0; i < toutesAnnees.length; i++) {
+  var moyAnnuelle = tousRasters[i].reduceRegion({
+    reducer: ee.Reducer.mean(),
+    geometry: pays.geometry(),
+    scale: 1000,
+    maxPixels: 1e13,
+    bestEffort: true
+  });
+  
+  var valeur = moyAnnuelle.get('b1');
+  print(toutesAnnees[i] + '  | ' + valeur);
+}
+
+// 9. TENDANCE GÉNÉRALE
+var incidence2000Moy = incidence_2000.reduceRegion({
+  reducer: ee.Reducer.mean(),
+  geometry: pays.geometry(),
+  scale: 1000,
+  maxPixels: 1e13,
+  bestEffort: true
+}).get('b1');
+
+var incidence2024Moy = incidence_2024.reduceRegion({
+  reducer: ee.Reducer.mean(),
+  geometry: pays.geometry(),
+  scale: 1000,
+  maxPixels: 1e13,
+  bestEffort: true
+}).get('b1');
+
+print('Incidence 2000:', incidence2000Moy, 'cas/1000');
+print('Incidence 2024:', incidence2024Moy, 'cas/1000');
+print('Variation 2000-2024:', ee.Number(incidence2024Moy).subtract(incidence2000Moy), 'cas/1000');
+
+var pourcentageChange = ee.Number(incidence2024Moy).subtract(incidence2000Moy)
+  .divide(incidence2000Moy).multiply(100);
+print('Changement en %:', pourcentageChange, '%');
+
+// 10. GRAPHIQUE D'ÉVOLUTION DE L'INCIDENCE 2000-2024
+// 10. GRAPHIQUE D'ÉVOLUTION DE L'INCIDENCE 2000-2024
+
+// Créer une FeatureCollection avec les données d'incidence par année
+var anneesGraph = [];
+var incidencesGraph = [];
+
+var toutesAnneesGraph = [2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009,
+                         2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019,
+                         2020, 2021, 2022, 2023, 2024];
+
+var tousRastersGraph = [incidence_2000, incidence_2001, incidence_2002, incidence_2003, incidence_2004,
+                        incidence_2005, incidence_2006, incidence_2007, incidence_2008, incidence_2009,
+                        incidence_2010, incidence_2011, incidence_2012, incidence_2013, incidence_2014,
+                        incidence_2015, incidence_2016, incidence_2017, incidence_2018, incidence_2019,
+                        incidence_2020, incidence_2021, incidence_2022, incidence_2023, incidence_2024];
+
+// Créer une liste de features pour le graphique
+var featuresGraph = toutesAnneesGraph.map(function(annee, index) {
+  var raster = tousRastersGraph[index];
+  var moyAnnuelle = raster.reduceRegion({
+    reducer: ee.Reducer.mean(),
+    geometry: pays.geometry(),
+    scale: 1000,
+    maxPixels: 1e13,
+    bestEffort: true
+  });
+  
+  return ee.Feature(null, {
+    'annee': annee,
+    'incidence': moyAnnuelle.get('b1')
+  });
+});
+
+var fcGraph = ee.FeatureCollection(featuresGraph);
+
+// Créer le graphique
+var chartIncidence = ui.Chart.feature.byFeature({
+  features: fcGraph,
+  xProperty: 'annee',
+  yProperties: ['incidence']
+}).setChartType('LineChart')
+  .setOptions({
+    title: 'Evolution de l\'incidence du paludisme au Togo (2000-2024)',
+    hAxis: {
+      title: 'Année',
+      format: '####',
+      gridlines: {count: 25}
+    },
+    vAxis: {
+      title: 'Incidence (cas/1000 habitants/an)',
+      minValue: 0
+    },
+    lineWidth: 3,
+    pointSize: 5,
+    colors: ['#e31a1c'],
+    legend: {position: 'none'},
+    series: {
+      0: {targetAxisIndex: 0}
+    }
+  });
+
+print(chartIncidence);
