@@ -11,9 +11,10 @@ proportion de superficie réservée selon les différents usages du sol.
 
 ## Équipe
 - **David NGUEAJIO**
-- **Cheikh Mouhamadou Moustapha NDIAYE **
-- **Mamadou Lamine DIABANG **
-- **Cheikh Ahmadou Bamba FALL **
+- **Cheikh Mouhamadou Moustapha NDIAYE**
+- **Mamadou Lamine DIABANG**
+- **Cheikh Ahmadou Bamba FALL**
+- **Trésor RIRADJIM**
 
 **Classe :** ISE1 CL
 **Année académique :** 2025-2026
@@ -134,5 +135,6 @@ identifier les zones sous-équipées.
 ## Licence
 Projet académique.
 ```
+
 
 
