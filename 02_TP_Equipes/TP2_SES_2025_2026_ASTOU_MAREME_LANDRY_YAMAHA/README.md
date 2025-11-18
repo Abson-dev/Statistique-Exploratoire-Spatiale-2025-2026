@@ -1,4 +1,4 @@
-# Projet Analyse Spatiale du Cameroun
+# TP2 d'analyse spatiale du Cameroun
 
 ## Participants
 
@@ -7,7 +7,7 @@
 - DIOP Mareme
 - NGAKE YAMAHA Herman Parfait
 
-**Encadrant :** M. HEMA
+**Superviseur :** M. HEMA
 
 ---
 
@@ -59,14 +59,12 @@ library(RColorBrewer)
 
 ```
 TP2_SES_2025_2026_ASTOU_MAREME_LANDRY_YAMAHA/
-│
-├── data/
 │   
 │
 ├── outputs/
 │   └── cartes, base de données et tableaux de bord (PNG, HTML, CSV)
 │
-├── Scripts/
+├── scripts/
 │    ├── script1.R
 │    ├── script2.R
 │    ├── visualisation_Aires protégées.R
@@ -328,4 +326,5 @@ Fournir un tableau de bord interactif pour la planification stratégique.
 
 
 ---
+
 
