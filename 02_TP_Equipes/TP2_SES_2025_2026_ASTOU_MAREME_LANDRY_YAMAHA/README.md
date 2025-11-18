@@ -74,6 +74,8 @@ TP2_SES_2025_2026_ASTOU_MAREME_LANDRY_YAMAHA/
 │─── main.R
 │
 │─── TP1_SES_2025_2026_ASTOU_MAREME_LANDRY_YAMAHA.Rproj
+│
+│─── README.md
 ```
 
 **NB :**
@@ -325,4 +327,5 @@ Fournir un tableau de bord interactif pour la planification stratégique.
 
 
 ---
+
 
