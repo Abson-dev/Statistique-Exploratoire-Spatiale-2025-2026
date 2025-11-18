@@ -4,11 +4,12 @@
 Ce projet analyse l'évolution spatio-temporelle du taux d'incidence du paludisme à *Plasmodium falciparum* au Bénin sur une période de 25 ans (2000-2024).
 L'analyse utilise des données géospatiales pour cartographier et comprendre la distribution du paludisme sur le territoire béninois.
 
-## Réalisation de : Herman YAMAHA
+**Réalisation de :** Herman YAMAHA
 
-## Sous la supervision : M. HEMA
+**Sous la supervision :** M. HEMA
 
 **Classe :** ISE1 CL
+
 **Année académique :** 2025-2026
 
 ## Structure du projet
@@ -86,5 +87,6 @@ Les analyses ont permis de :
 ## Licence
 Projet académique.
 ```
+
 
 
