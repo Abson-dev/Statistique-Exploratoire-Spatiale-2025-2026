@@ -66,14 +66,13 @@ TP1_Individuel_Herman_YAMAHA/
 ### 4. Évolution temporelle
 - Analyse de tendances sur 25 ans (2000-2024)
 - Visualisation de l'évolution du paludisme au Bénin
-```
-```
-### Reproduction des analyses
+
+## Reproduction des analyses
 1. Ouvrir le projet RStudio (`.Rproj`)
 2. Exécuter les scripts dans l'ordre chronologique
 3. Les résultats seront générés dans le dossier `outputs/`
 
-### Résultats principaux
+## Résultats principaux
 Les analyses ont permis de :
 - Cartographier la distribution spatiale du paludisme au Bénin
 - Identifier les zones à forte endémie
@@ -85,4 +84,5 @@ Les analyses ont permis de :
 - **Données sur le paludisme :** https://data.malariaatlas.org/
 
 ```
+
 
