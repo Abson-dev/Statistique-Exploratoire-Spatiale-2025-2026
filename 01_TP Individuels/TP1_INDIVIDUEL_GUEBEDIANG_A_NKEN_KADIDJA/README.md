@@ -147,10 +147,9 @@ Les contributions sont les bienvenues !
 Si vous utilisez ce code dans vos recherches, veuillez citer :
 ```bibtex
 @software{ethiopia_health_mapping_2024,
-  author = {Votre Nom},
+  author = {Kadidja GUEBEDIANG A NKEN},
   title = {Cartographie Dynamique des Indicateurs de Santé en Éthiopie},
-  year = {2024},
-  url = {https://github.com/votre-username/ethiopia-health-mapping-gee}
+  year = {2025}
 }
 ```
 
@@ -160,15 +159,10 @@ MIT License - voir le fichier [LICENSE](LICENSE) pour plus de détails.
 
 ## 👨‍💻 Auteur
 
-**Votre Nom**
-- GitHub: [@votre-username](https://github.com/votre-username)
-- Email: votre.email@example.com
+**Kadidja GUEBEDIANG A NKEN**
+- GitHub: [@KadidjaGUEBEDIANG](https://github.com/KadidjaGUEBEDIANG)
+- Email: guebediangk@gmail.com
 
-## 🙏 Remerciements
-
-- Google Earth Engine pour la plateforme
-- DHS Program pour les données
-- Anthropic Claude pour l'assistance au développement
 
 ## 📚 Ressources
 
@@ -176,12 +170,7 @@ MIT License - voir le fichier [LICENSE](LICENSE) pour plus de détails.
 - [Guide des API GEE](https://developers.google.com/earth-engine/guides)
 - [Forum GEE](https://groups.google.com/g/google-earth-engine-developers)
 
-## 🐛 Signaler un bug
 
-Ouvrez une [issue](https://github.com/votre-username/ethiopia-health-mapping-gee/issues) avec :
-- Description du problème
-- Étapes pour reproduire
-- Captures d'écran si possible
 
 ## 🔄 Versions
 
@@ -194,4 +183,3 @@ Ouvrez une [issue](https://github.com/votre-username/ethiopia-health-mapping-gee
 
 ---
 
-⭐ **N'oubliez pas de mettre une étoile si ce projet vous aide !** ⭐
