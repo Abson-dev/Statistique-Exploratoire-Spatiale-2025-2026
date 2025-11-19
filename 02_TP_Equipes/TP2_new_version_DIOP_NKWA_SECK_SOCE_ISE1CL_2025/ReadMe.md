@@ -54,15 +54,15 @@ Projet_Infrastructures_Benin/
 │
 ├── script/                                 # Scripts Python
 │   ├── data_loader.py  # Charge toutes les données géospatiales depuis les fichiers sources: Shapefiles, OSM, WDPA
-│   ├── preprocessing.py  # Prépare et nettoie les données avant analyse en harmonisant les systèmes de projection
-│   ├── utils.py  # Fournit une boîte à outils de fonctions géospatiales réutilisables comme la création de buffers etc
-│   ├── analyses.py  # Effectue les analyses spatiales de proximité et d'accessibilité aux infrastructures.
+│   ├── preprocessing.py  # Prépare les données en harmonisant les systèmes de projection
+│   ├── utils.py  # Fournit une toolbox de fonctions comme la création de buffers 
+│   ├── analyses.py  # Effectue les analyses de proximité aux infrastructures.
 │   ├── viz.py  # Génère les visualisations statiques
-│   ├── interactive.py  # Crée des cartes web interactives(HTML)permettant zoom et navigation et exploration dynamique
-│   ├── advanced_viz.py  # Produit des visualisations spécialisées:cartes de population, infrastructures de santé/éducation etc
-│   ├── departmental_analysis.py  # Calcule les statistiques agrégées par départemen
+│   ├── interactive.py  # Crée des cartes web interactives(HTML)
+│   ├── advanced_viz.py  # Produit des visualisations des infrastructures de santé/éducation etc
+│   ├── departmental_analysis.py  # Calcule les statistiques agrégées par département
 │   ├── run_all.py  # Script main orchestrant lensemble du travail
-│   └── check_environment.py  # Script de diagnostic vérifiant que l'environnement est correctement configuré 
+│   └── check_environment.py  # Script assurant que l'environnement est bien configuré 
 │
 ├── outputs/                                # Résultats de l'analyse
 │   ├── analyses/
@@ -203,4 +203,5 @@ Les analyses ont permis de :
 
 
 Projet académique.
+
 
