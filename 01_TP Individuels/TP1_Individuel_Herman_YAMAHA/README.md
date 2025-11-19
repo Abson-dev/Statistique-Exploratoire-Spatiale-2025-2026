@@ -44,7 +44,7 @@ TP1_Individuel_Herman_YAMAHA/
 - **R / RStudio** : Environnement de développement principal
 - **Principaux packages R utilisés  :**
   - `sf` : Manipulation de données vectorielles
-  - `terra` ou `raster` : Manipulation de données raster
+  - `terra` : Manipulation de données raster
   - `tmap` : Création de cartes thématiques
   - `ggplot2` : Visualisations
   - `leaflet` : Cartes interactives
@@ -82,4 +82,5 @@ Les analyses ont permis de :
 ## Références
 - **GADM :** https://gadm.org/
 - **Données sur le paludisme :** https://data.malariaatlas.org/
+
 
