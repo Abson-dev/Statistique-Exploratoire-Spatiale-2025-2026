@@ -82,7 +82,3 @@ Les analyses ont permis de :
 ## Références
 - **GADM :** https://gadm.org/
 - **Données sur le paludisme :** https://data.malariaatlas.org/
-
-```
-
-
