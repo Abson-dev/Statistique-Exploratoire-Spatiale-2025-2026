@@ -1,15 +1,18 @@
-# Analyse Spatiale du Paludisme au Bénin (2000-2024)
+# Analyse spatiale du paludisme au Bénin (2000-2024)
 
-## Description du Projet
+## Description du projet
 Ce projet analyse l'évolution spatio-temporelle du taux d'incidence du paludisme à *Plasmodium falciparum* au Bénin sur une période de 25 ans (2000-2024).
 L'analyse utilise des données géospatiales pour cartographier et comprendre la distribution du paludisme sur le territoire béninois.
 
-## Réalisation de : Herman YAMAHA
+**Réalisation de :** Herman YAMAHA
+
+**Sous la supervision de :** M. HEMA
 
 **Classe :** ISE1 CL
+
 **Année académique :** 2025-2026
 
-## Structure du Projet
+## Structure du projet
 ```
 TP1_Individuel_Herman_YAMAHA/
 │
@@ -33,11 +36,11 @@ TP1_Individuel_Herman_YAMAHA/
     └── statistiques_annuelles.csv   # Taux d'incidence moyenne par année
 ```
 
-## Données Utilisées
-### Données Raster
-### Données Vectorielles
+## Données utilisées
+### Données raster
+### Données vectorielles
 
-## Technologies et Outils
+## Technologies et outils
 - **R / RStudio** : Environnement de développement principal
 - **Principaux packages R utilisés  :**
   - `sf` : Manipulation de données vectorielles
@@ -47,30 +50,30 @@ TP1_Individuel_Herman_YAMAHA/
   - `leaflet` : Cartes interactives
   - `dplyr` : Manipulation de données
 
-## Analyses Réalisées
-### 1. Cartographie Statique
+## Analyses ééalisées
+### 1. Cartographie statique
 - Visualisation du taux d'incidence pour l'année 2010
 - Production de cartes thématiques avec légende et échelle
 
-### 2. Cartographie Interactive
+### 2. Cartographie interactive
 - Carte interactive HTML permettant l'exploration des données
 - Zoom, pan et affichage d'informations au survol
 
-### 3. Comparaison Multi-Annuelle
+### 3. Comparaison multi-annuelle
 - Analyse comparative entre plusieurs années clés
 - Identification des zones à forte/faible incidence
 
-### 4. Évolution Temporelle
+### 4. Évolution temporelle
 - Analyse de tendances sur 25 ans (2000-2024)
 - Visualisation de l'évolution du paludisme au Bénin
 ```
 ```
-### Reproduction des Analyses
+### Reproduction des analyses
 1. Ouvrir le projet RStudio (`.Rproj`)
 2. Exécuter les scripts dans l'ordre chronologique
 3. Les résultats seront générés dans le dossier `outputs/`
 
-## Résultats Principaux
+## Résultats principaux
 Les analyses ont permis de :
 - Cartographier la distribution spatiale du paludisme au Bénin
 - Identifier les zones à forte endémie
@@ -80,7 +83,3 @@ Les analyses ont permis de :
 ## Références
 - **GADM :** https://gadm.org/
 - **Données sur le paludisme :** https://data.malariaatlas.org/
-
-## Licence
-Projet académique.
-```
