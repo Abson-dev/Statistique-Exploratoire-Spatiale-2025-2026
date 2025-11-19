@@ -56,7 +56,7 @@ Les données de malariaatlas étant indisponible, nous avons travaillé sur cett
 
 Si vous avez un compte GEE Team/Pro, vous pouvez accéder au code directement via GEE :
 ```
-[https://code.earthengine.google.com/?accept_repo=users/YOUR_USERNAME/ethiopia-health](https://code.earthengine.google.com/?scriptPath=users%2FKadidja_G_A_NKEN%2Fdebut%3ATP1INDIVIDUEL)
+[https://code.earthengine.google.com/?scriptPath=users%2FKadidja_G_A_NKEN%2Fdebut%3ATP1INDIVIDUEL]
 ```
 
 ## 📁 Structure des données
@@ -182,5 +182,6 @@ MIT License - voir le fichier [LICENSE](LICENSE) pour plus de détails.
 - ✅ Interface interactive complète
 
 ---
+
 
 
