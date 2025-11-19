@@ -1,0 +1,510 @@
+// ========================================
+// TP STATISTIQUE SPATIALE EXPLORATOIRE
+// Analyse du Burkina Faso avec GEE
+// ========================================
+
+// CONFIGURATION INITIALE
+Map.setCenter(-1.5, 12.3, 7);
+
+// ========================================
+// 1. CHARGEMENT DES LIMITES ADMINISTRATIVES GADM
+// ========================================
+print('=== LIMITES ADMINISTRATIVES GADM ===');
+
+// Charger vos assets GADM
+var gadm0 = ee.FeatureCollection('projects/tp1-indiv-visualisation/assets/gadm41_BFA_0');
+var gadm1 = ee.FeatureCollection('projects/tp1-indiv-visualisation/assets/gadm41_BFA_1');
+var gadm2 = ee.FeatureCollection('projects/tp1-indiv-visualisation/assets/gadm41_BFA_2');
+var gadm3 = ee.FeatureCollection('projects/tp1-indiv-visualisation/assets/gadm41_BFA_3');
+
+// Caractéristiques des limites administratives
+print('📊 CARACTÉRISTIQUES DES LIMITES:');
+print('Niveau 0 (Pays) - Nombre de features:', gadm0.size());
+print('Niveau 0 - Propriétés:', gadm0.first().propertyNames());
+print('Niveau 0 - Premier élément:', gadm0.first());
+print('---');
+
+print('Niveau 1 (Régions) - Nombre:', gadm1.size());
+print('Niveau 1 - Propriétés:', gadm1.first().propertyNames());
+print('Niveau 1 - Noms des régions:', gadm1.aggregate_array('NAME_1'));
+print('---');
+
+print('Niveau 2 (Provinces) - Nombre:', gadm2.size());
+print('Niveau 2 - Propriétés:', gadm2.first().propertyNames());
+print('---');
+
+print('Niveau 3 (Départements) - Nombre:', gadm3.size());
+print('Niveau 3 - Propriétés:', gadm3.first().propertyNames());
+print('---');
+
+// Calculer les superficies
+var gadm1WithArea = gadm1.map(function(feat) {
+  return feat.set('area_km2', feat.geometry().area().divide(1000000));
+});
+print('Superficie des régions (km²):', gadm1WithArea.aggregate_array('area_km2'));
+
+// ========================================
+// 2. CHARGEMENT DES DONNÉES WORLDPOP (2015-2025)
+// ========================================
+print('=== DONNÉES DE POPULATION (WORLDPOP) ===');
+
+// Fonction pour charger vos rasters WorldPop
+var loadPopRaster = function(year) {
+  var assetPath = 'projects/tp1-indiv-visualisation/assets/bfa_pop_' + 
+                  year + '_CN_100m_R2025A_v1';
+  return ee.Image(assetPath).set('year', year);
+};
+
+// Créer une collection avec tous les rasters de population
+var years = [2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025];
+var popImages = years.map(loadPopRaster);
+var popCollection = ee.ImageCollection(popImages);
+
+print('Nombre d\'images de population:', popCollection.size());
+print('Années disponibles:', years);
+
+// Caractéristiques du premier raster
+var pop2015 = loadPopRaster(2015);
+print('Propriétés raster 2015:', pop2015.propertyNames());
+print('Projection:', pop2015.projection());
+print('Échelle (m):', pop2015.projection().nominalScale());
+
+// Statistiques globales pour chaque année
+print('📊 STATISTIQUES DE POPULATION PAR ANNÉE:');
+
+// Calculer uniquement pour quelques années clés pour éviter trop d'agrégations
+var keyYears = [2015, 2020, 2025];
+var popStatsKey = keyYears.map(function(year) {
+  var img = loadPopRaster(year);
+  var stats = img.reduceRegion({
+    reducer: ee.Reducer.sum(),
+    geometry: gadm0.geometry(),
+    scale: 500, // Échelle réduite pour accélérer
+    maxPixels: 1e10,
+    bestEffort: true
+  });
+  
+  return ee.Feature(null, {
+    'year': year,
+    'sum': stats.get('b1')
+  });
+});
+
+var popStats = ee.FeatureCollection(popStatsKey);
+print('Statistiques pour années clés (2015, 2020, 2025):', popStats);
+
+// Taux de croissance
+print('Calcul du taux de croissance en cours...');
+var pop2015img = loadPopRaster(2015);
+var pop2025img = loadPopRaster(2025);
+
+var stats2015 = pop2015img.reduceRegion({
+  reducer: ee.Reducer.sum(),
+  geometry: gadm0.geometry(),
+  scale: 500,
+  maxPixels: 1e10,
+  bestEffort: true
+});
+
+var stats2025 = pop2025img.reduceRegion({
+  reducer: ee.Reducer.sum(),
+  geometry: gadm0.geometry(),
+  scale: 500,
+  maxPixels: 1e10,
+  bestEffort: true
+});
+
+var pop2015Total = ee.Number(stats2015.get('b1'));
+var pop2025Total = ee.Number(stats2025.get('b1'));
+var growthRate = pop2025Total.subtract(pop2015Total).divide(pop2015Total).multiply(100);
+
+// Évaluer le résultat
+growthRate.evaluate(function(result) {
+  print('Taux de croissance 2015-2025 (%):', result);
+});
+
+// ========================================
+// 3. CHARGEMENT DES INFRASTRUCTURES (OPTIONNEL)
+// ========================================
+print('=== INFRASTRUCTURES ===');
+
+// Vérifier si les infrastructures existent
+var hasInfrastructures = false;
+var cities, villages, schools, hospitals;
+
+try {
+  cities = ee.FeatureCollection('projects/tp1-indiv-visualisation/assets/cities_100');
+  villages = ee.FeatureCollection('projects/tp1-indiv-visualisation/assets/villages_100');
+  schools = ee.FeatureCollection('projects/tp1-indiv-visualisation/assets/schools_100');
+  hospitals = ee.FeatureCollection('projects/tp1-indiv-visualisation/assets/hospitals_100');
+  hasInfrastructures = true;
+  
+  // Caractéristiques des infrastructures
+  print('📊 CARACTÉRISTIQUES DES INFRASTRUCTURES:');
+  print('Villes - Nombre:', cities.size());
+  print('Villes - Propriétés:', cities.first().propertyNames());
+  print('Villes - Échantillon:', cities.limit(3));
+  print('---');
+  
+  print('Villages - Nombre:', villages.size());
+  print('Villages - Propriétés:', villages.first().propertyNames());
+  print('---');
+  
+  print('Écoles - Nombre:', schools.size());
+  print('Écoles - Propriétés:', schools.first().propertyNames());
+  print('---');
+  
+  print('Hôpitaux - Nombre:', hospitals.size());
+  print('Hôpitaux - Propriétés:', hospitals.first().propertyNames());
+  print('---');
+} catch(e) {
+  print('⚠️ Assets d\'infrastructures non trouvés.');
+  print('⚠️ Les visualisations d\'infrastructures seront ignorées.');
+  print('⚠️ Assurez-vous d\'avoir uploadé: cities_100, villages_100, schools_100, hospitals_100');
+}
+
+// ========================================
+// 4. VISUALISATIONS AVANCÉES
+// ========================================
+
+var emptyImg = ee.Image().byte();
+
+// 4.1 LIMITES ADMINISTRATIVES - VUE HIÉRARCHIQUE
+print('=== CARTES DES LIMITES ADMINISTRATIVES ===');
+
+// Niveau 0 - Frontière nationale (rouge épais)
+var gadm0Outline = emptyImg.paint({
+  featureCollection: gadm0,
+  color: 1,
+  width: 5
+});
+Map.addLayer(gadm0Outline, {palette: 'FF0000'}, '🗺️ Frontière Nationale (Niveau 0)', true);
+
+// Niveau 1 - Régions avec remplissage coloré
+// Créer un ID numérique pour chaque région
+var gadm1WithID = gadm1.map(function(feat, idx) {
+  return feat.set('region_id', idx);
+});
+
+var gadm1Filled = emptyImg.paint(gadm1WithID, 'region_id');
+Map.addLayer(gadm1Filled, {
+  palette: ['#e41a1c', '#377eb8', '#4daf4a', '#984ea3', '#ff7f00', 
+            '#ffff33', '#a65628', '#f781bf', '#66c2a5', '#fc8d62', 
+            '#8da0cb', '#e78ac3', '#a6d854'],
+  min: 0,
+  max: 12
+}, '🗺️ Régions (Niveau 1)', true);
+
+// Niveau 1 - Contours
+var gadm1Outline = emptyImg.paint({
+  featureCollection: gadm1,
+  color: 1,
+  width: 3
+});
+Map.addLayer(gadm1Outline, {palette: '000000'}, 'Contours Régions', true);
+
+// Niveau 2 - Provinces
+var gadm2Outline = emptyImg.paint({
+  featureCollection: gadm2,
+  color: 1,
+  width: 1.5
+});
+Map.addLayer(gadm2Outline, {palette: 'FFA500'}, '🗺️ Provinces (Niveau 2)', false);
+
+// Niveau 3 - Départements
+var gadm3Outline = emptyImg.paint({
+  featureCollection: gadm3,
+  color: 1,
+  width: 0.8
+});
+Map.addLayer(gadm3Outline, {palette: 'FFFF00'}, '🗺️ Départements (Niveau 3)', false);
+
+// 4.2 POPULATION 2025 - CARTE DE DENSITÉ
+print('=== CARTES DE POPULATION ===');
+
+var pop2025 = loadPopRaster(2025);
+var popVis = {
+  min: 0,
+  max: 500,
+  palette: ['#ffffff', '#fff5f0', '#fee0d2', '#fcbba1', '#fc9272', 
+            '#fb6a4a', '#ef3b2c', '#cb181d', '#a50f15', '#67000d']
+};
+Map.addLayer(pop2025, popVis, '👥 Densité Population 2025', true);
+
+// 4.3 CARTE CHOROPLÈTHE - POPULATION PAR RÉGION
+var popByRegion = pop2025.reduceRegions({
+  collection: gadm1,
+  reducer: ee.Reducer.sum(),
+  scale: 500, // Échelle augmentée pour réduire les calculs
+  crs: 'EPSG:4326',
+  tileScale: 4 // Parallélisation pour accélérer
+});
+
+print('Population par région (limitée à 5):', popByRegion.limit(5));
+
+// Visualisation choroplèthe
+var maxPopRegion = ee.Number(popByRegion.aggregate_max('sum'));
+var minPopRegion = ee.Number(popByRegion.aggregate_min('sum'));
+
+var choropleth = popByRegion.map(function(feat) {
+  var value = ee.Number(feat.get('sum'));
+  var normalized = value.subtract(minPopRegion)
+    .divide(maxPopRegion.subtract(minPopRegion));
+  return feat.set('pop_normalized', normalized);
+});
+
+var choroplethImg = emptyImg.paint(choropleth, 'pop_normalized');
+Map.addLayer(choroplethImg, {
+  palette: ['#ffffcc', '#ffeda0', '#fed976', '#feb24c', 
+            '#fd8d3c', '#fc4e2a', '#e31a1c', '#bd0026', '#800026'],
+  min: 0,
+  max: 1
+}, '📊 Population par Région (Choroplèthe)', false);
+
+// 4.4 ÉVOLUTION TEMPORELLE - GRAPHIQUE
+// Créer un graphique simple avec les années clés
+var chartPop = ui.Chart.feature.byFeature({
+  features: popStats,
+  xProperty: 'year',
+  yProperties: ['sum']
+}).setSeriesNames(['Population Totale'])
+  .setOptions({
+  title: 'Évolution de la Population (2015, 2020, 2025)',
+  hAxis: {title: 'Année', format: '####'},
+  vAxis: {title: 'Population Totale', format: 'short'},
+  lineWidth: 3,
+  pointSize: 6,
+  series: {
+    0: {color: '#1f77b4'}
+  }
+});
+print(chartPop);
+
+// 4.5 COMPARAISON 2015 vs 2025
+var pop2015 = loadPopRaster(2015);
+var popDiff = pop2025.subtract(pop2015);
+
+Map.addLayer(popDiff, {
+  min: -100,
+  max: 100,
+  palette: ['#d73027', '#fc8d59', '#fee090', '#ffffbf', 
+            '#e0f3f8', '#91bfdb', '#4575b4']
+}, '📈 Changement Population (2025-2015)', false);
+
+// 4.6 HOTSPOTS DE POPULATION
+var kernel = ee.Kernel.gaussian({
+  radius: 10000,
+  units: 'meters',
+  normalize: true
+});
+
+var popDensity = pop2025.convolve(kernel);
+Map.addLayer(popDensity, {
+  min: 0,
+  max: 2000,
+  palette: ['#440154', '#31688e', '#35b779', '#fde724']
+}, '🔥 Hotspots Population', false);
+
+// 4.7 INFRASTRUCTURES - VISUALISATION (SI DISPONIBLES)
+print('=== CARTES DES INFRASTRUCTURES ===');
+
+if (hasInfrastructures) {
+  // Villes (grandes)
+  Map.addLayer(cities, {color: 'red'}, '🏙️ Villes', true);
+  
+  // Villages (moyennes)
+  Map.addLayer(villages, {color: 'orange'}, '🏘️ Villages', false);
+  
+  // Écoles
+  Map.addLayer(schools, {color: 'blue'}, '🏫 Écoles', true);
+  
+  // Hôpitaux
+  Map.addLayer(hospitals, {color: 'green'}, '🏥 Hôpitaux', true);
+  
+  // 4.8 DENSITÉ D'INFRASTRUCTURES
+  var schoolsCount = schools.size();
+  var hospitalsCount = hospitals.size();
+  print('Total écoles:', schoolsCount);
+  print('Total hôpitaux:', hospitalsCount);
+  
+  // 4.9 ACCESSIBILITÉ - DISTANCE AUX HÔPITAUX
+  // Créer une image avec une valeur constante pour chaque hôpital
+  var hospitalsImg = ee.Image(0).byte().paint({
+    featureCollection: hospitals,
+    color: 1
+  });
+  
+  var distance = hospitalsImg.fastDistanceTransform({
+    neighborhood: 256,
+    units: 'pixels',
+    metric: 'squared_euclidean'
+  }).sqrt()
+    .multiply(ee.Image.pixelArea().sqrt());
+  
+  Map.addLayer(distance.clip(gadm0), {
+    min: 0,
+    max: 50000,
+    palette: ['green', 'yellow', 'orange', 'red']
+  }, '🚑 Distance aux Hôpitaux (m)', false);
+  
+  // 4.10 RATIO POPULATION/INFRASTRUCTURES PAR RÉGION
+  var gadm1Stats = gadm1.map(function(region) {
+    var regionPop = pop2025.reduceRegion({
+      reducer: ee.Reducer.sum(),
+      geometry: region.geometry(),
+      scale: 100,
+      maxPixels: 1e10
+    }).get('b1');
+    
+    var schoolCount = schools.filterBounds(region.geometry()).size();
+    var hospitalCount = hospitals.filterBounds(region.geometry()).size();
+    
+    return region.set({
+      'population': regionPop,
+      'schools': schoolCount,
+      'hospitals': hospitalCount,
+      'pop_per_school': ee.Number(regionPop).divide(ee.Number(schoolCount).max(1)),
+      'pop_per_hospital': ee.Number(regionPop).divide(ee.Number(hospitalCount).max(1))
+    });
+  });
+  
+  print('📊 Ratio Population/Infrastructures par région:', gadm1Stats);
+} else {
+  print('⚠️ Visualisations d\'infrastructures ignorées (assets manquants)');
+}
+
+// 4.11 GRADIENT DE POPULATION
+var gradient = pop2025.gradient();
+var gradientMagnitude = gradient.select('x').pow(2)
+  .add(gradient.select('y').pow(2)).sqrt();
+
+Map.addLayer(gradientMagnitude, {
+  min: 0,
+  max: 50,
+  palette: ['white', 'yellow', 'orange', 'red', 'darkred']
+}, '📐 Gradient de Densité', false);
+
+// ========================================
+// 5. STATISTIQUES AVANCÉES
+// ========================================
+print('=== ANALYSES STATISTIQUES AVANCÉES ===');
+
+// Statistiques par niveau administratif
+var pop2025ByProvince = pop2025.reduceRegions({
+  collection: gadm2,
+  reducer: ee.Reducer.sum(),
+  scale: 500,
+  tileScale: 4
+});
+
+print('Top 5 provinces par population:', 
+  pop2025ByProvince.sort('sum', false).limit(5));
+
+// Histogramme de distribution
+var histogram = ui.Chart.image.histogram({
+  image: pop2025,
+  region: gadm0.geometry(),
+  scale: 1000, // Échelle augmentée
+  maxPixels: 1e8, // Réduit
+  maxBuckets: 30 // Réduit
+}).setOptions({
+  title: 'Distribution de la Densité de Population (2025)',
+  hAxis: {title: 'Densité (personnes/100m²)', format: 'short'},
+  vAxis: {title: 'Fréquence (pixels)', format: 'short'},
+  colors: ['#1f77b4'],
+  legend: {position: 'none'}
+});
+print(histogram);
+
+// ========================================
+// 6. LÉGENDE INTERACTIVE
+// ========================================
+
+var legend = ui.Panel({
+  style: {
+    position: 'bottom-left',
+    padding: '8px 15px',
+    backgroundColor: 'white'
+  }
+});
+
+var legendTitle = ui.Label({
+  value: '📊 Densité de Population',
+  style: {
+    fontWeight: 'bold',
+    fontSize: '16px',
+    margin: '0 0 8px 0',
+    padding: '0'
+  }
+});
+legend.add(legendTitle);
+
+var makeRow = function(color, name) {
+  var colorBox = ui.Label({
+    style: {
+      backgroundColor: color,
+      padding: '10px',
+      margin: '0 0 4px 0',
+      border: '1px solid black'
+    }
+  });
+  var description = ui.Label({
+    value: name,
+    style: {margin: '0 0 4px 6px'}
+  });
+  return ui.Panel({
+    widgets: [colorBox, description],
+    layout: ui.Panel.Layout.Flow('horizontal')
+  });
+};
+
+legend.add(makeRow('#ffffff', '0 - Très faible'));
+legend.add(makeRow('#fcbba1', '100 - Faible'));
+legend.add(makeRow('#fb6a4a', '200 - Moyenne'));
+legend.add(makeRow('#cb181d', '300 - Élevée'));
+legend.add(makeRow('#67000d', '500+ - Très élevée'));
+
+Map.add(legend);
+
+// ========================================
+// 7. EXPORTS (OPTIONNELS)
+// ========================================
+print('=== OPTIONS D\'EXPORT ===');
+
+// Décommentez pour exporter
+/*
+// Export population 2025
+Export.image.toDrive({
+  image: pop2025,
+  description: 'BFA_Population_2025',
+  scale: 100,
+  region: gadm0.geometry(),
+  maxPixels: 1e10
+});
+
+// Export statistiques régionales
+Export.table.toDrive({
+  collection: popByRegion,
+  description: 'BFA_Stats_Regions',
+  fileFormat: 'CSV'
+});
+
+// Export ratio infrastructures
+Export.table.toDrive({
+  collection: gadm1Stats,
+  description: 'BFA_Ratio_Infrastructures',
+  fileFormat: 'CSV'
+});
+*/
+
+// ========================================
+// 8. RÉSUMÉ FINAL
+// ========================================
+print('===========================================');
+print('✅ SCRIPT TERMINÉ AVEC SUCCÈS');
+print('===========================================');
+print('📍 Toutes les couches sont chargées sur la carte');
+print('📊 Consultez les graphiques et statistiques ci-dessus');
+print('🗺️ Utilisez les cases à cocher pour activer/désactiver les couches');
+print('💾 Décommentez la section Export pour sauvegarder les résultats');
+print('===========================================');

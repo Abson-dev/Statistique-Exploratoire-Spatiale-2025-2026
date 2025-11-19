@@ -1,0 +1,713 @@
+// ========================================
+// APPLICATION INTERACTIVE - BURKINA FASO
+// Statistique Spatiale Exploratoire
+// ========================================
+
+// CONFIGURATION INITIALE
+Map.setCenter(-1.5, 12.3, 7);
+Map.setOptions('SATELLITE');
+
+// Chargement des données
+var gadm0 = ee.FeatureCollection('projects/tp1-indiv-visualisation/assets/gadm41_BFA_0');
+var gadm1 = ee.FeatureCollection('projects/tp1-indiv-visualisation/assets/gadm41_BFA_1');
+var gadm2 = ee.FeatureCollection('projects/tp1-indiv-visualisation/assets/gadm41_BFA_2');
+var gadm3 = ee.FeatureCollection('projects/tp1-indiv-visualisation/assets/gadm41_BFA_3');
+
+var cities = ee.FeatureCollection('projects/tp1-indiv-visualisation/assets/cities_100');
+var villages = ee.FeatureCollection('projects/tp1-indiv-visualisation/assets/villages_100');
+var schools = ee.FeatureCollection('projects/tp1-indiv-visualisation/assets/schools_100');
+var hospitals = ee.FeatureCollection('projects/tp1-indiv-visualisation/assets/hospitals_100');
+
+// Fonction pour charger les rasters de population
+var loadPopRaster = function(year) {
+  var assetPath = 'projects/tp1-indiv-visualisation/assets/bfa_pop_' + 
+                  year + '_CN_100m_R2025A_v1';
+  return ee.Image(assetPath).set('year', year);
+};
+
+var years = [2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025];
+var popImages = years.map(loadPopRaster);
+var popCollection = ee.ImageCollection(popImages);
+
+// ========================================
+// INTERFACE UTILISATEUR
+// ========================================
+
+// Nettoyer la carte et l'interface
+Map.clear();
+Map.setControlVisibility({all: false, zoomControl: true, mapTypeControl: true});
+
+// Panel principal
+var mainPanel = ui.Panel({
+  style: {
+    width: '350px',
+    padding: '10px',
+    backgroundColor: 'white'
+  }
+});
+
+// Titre de l'application
+var title = ui.Label({
+  value: '🌍 Burkina Faso - Analyse Spatiale',
+  style: {
+    fontSize: '24px',
+    fontWeight: 'bold',
+    color: '#2E7D32',
+    margin: '10px 0'
+  }
+});
+
+var subtitle = ui.Label({
+  value: 'Exploration interactive des données démographiques et infrastructures',
+  style: {
+    fontSize: '12px',
+    color: '#666',
+    margin: '0 0 15px 0'
+  }
+});
+
+mainPanel.add(title);
+mainPanel.add(subtitle);
+
+// Séparateur
+var separator = ui.Panel({
+  style: {
+    height: '2px',
+    backgroundColor: '#2E7D32',
+    margin: '10px 0'
+  }
+});
+
+mainPanel.add(separator);
+
+// ========================================
+// SECTION 1: SÉLECTION DE L'ANNÉE
+// ========================================
+
+var yearSection = ui.Label({
+  value: '📅 Sélection de l\'année',
+  style: {
+    fontSize: '16px',
+    fontWeight: 'bold',
+    margin: '10px 0'
+  }
+});
+mainPanel.add(yearSection);
+
+var yearSlider = ui.Slider({
+  min: 2015,
+  max: 2025,
+  value: 2025,
+  step: 1,
+  style: {stretch: 'horizontal', margin: '5px 0'}
+});
+
+var yearLabel = ui.Label({
+  value: 'Année: 2025',
+  style: {fontSize: '14px', color: '#1976D2'}
+});
+
+mainPanel.add(yearLabel);
+mainPanel.add(yearSlider);
+
+// ========================================
+// SECTION 2: LIMITES ADMINISTRATIVES
+// ========================================
+
+var limitsSection = ui.Label({
+  value: '🗺️ Limites Administratives',
+  style: {
+    fontSize: '16px',
+    fontWeight: 'bold',
+    margin: '15px 0 5px 0'
+  }
+});
+mainPanel.add(limitsSection);
+
+var checkbox0 = ui.Checkbox({label: 'Niveau 0 - Pays', value: true});
+var checkbox1 = ui.Checkbox({label: 'Niveau 1 - Régions (13)', value: true});
+var checkbox2 = ui.Checkbox({label: 'Niveau 2 - Provinces (45)', value: false});
+var checkbox3 = ui.Checkbox({label: 'Niveau 3 - Départements (351)', value: false});
+
+mainPanel.add(checkbox0);
+mainPanel.add(checkbox1);
+mainPanel.add(checkbox2);
+mainPanel.add(checkbox3);
+
+// ========================================
+// SECTION 3: VISUALISATION POPULATION
+// ========================================
+
+var popSection = ui.Label({
+  value: '👥 Visualisation Population',
+  style: {
+    fontSize: '16px',
+    fontWeight: 'bold',
+    margin: '15px 0 5px 0'
+  }
+});
+mainPanel.add(popSection);
+
+var popModeSelect = ui.Select({
+  items: [
+    {label: 'Densité', value: 'density'},
+    {label: 'Hotspots', value: 'hotspot'},
+    {label: 'Gradient', value: 'gradient'},
+    {label: 'Choroplèthe par région', value: 'choropleth'}
+  ],
+  value: 'density',
+  style: {stretch: 'horizontal'}
+});
+
+mainPanel.add(ui.Label('Mode d\'affichage:'));
+mainPanel.add(popModeSelect);
+
+var popCheckbox = ui.Checkbox({label: 'Afficher la population', value: true});
+mainPanel.add(popCheckbox);
+
+// ========================================
+// SECTION 4: INFRASTRUCTURES
+// ========================================
+
+var infraSection = ui.Label({
+  value: '🏢 Infrastructures',
+  style: {
+    fontSize: '16px',
+    fontWeight: 'bold',
+    margin: '15px 0 5px 0'
+  }
+});
+mainPanel.add(infraSection);
+
+var citiesCheckbox = ui.Checkbox({label: '🏙️ Villes (11)', value: true});
+var villagesCheckbox = ui.Checkbox({label: '🏘️ Villages (8,344)', value: false});
+var schoolsCheckbox = ui.Checkbox({label: '🏫 Écoles (4,116)', value: true});
+var hospitalsCheckbox = ui.Checkbox({label: '🏥 Hôpitaux (428)', value: true});
+var distanceCheckbox = ui.Checkbox({label: '🚑 Distance aux hôpitaux', value: false});
+
+mainPanel.add(citiesCheckbox);
+mainPanel.add(villagesCheckbox);
+mainPanel.add(schoolsCheckbox);
+mainPanel.add(hospitalsCheckbox);
+mainPanel.add(distanceCheckbox);
+
+// ========================================
+// SECTION 5: STATISTIQUES
+// ========================================
+
+var statsSection = ui.Label({
+  value: '📊 Statistiques',
+  style: {
+    fontSize: '16px',
+    fontWeight: 'bold',
+    margin: '15px 0 5px 0'
+  }
+});
+mainPanel.add(statsSection);
+
+var statsPanel = ui.Panel({
+  style: {
+    backgroundColor: '#F5F5F5',
+    padding: '10px',
+    margin: '5px 0'
+  }
+});
+
+var statsPop = ui.Label('Population totale: Calcul...');
+var statsRegion = ui.Label('Région sélectionnée: Aucune');
+
+statsPanel.add(statsPop);
+statsPanel.add(statsRegion);
+mainPanel.add(statsPanel);
+
+// Bouton pour afficher les graphiques
+var chartButton = ui.Button({
+  label: '📈 Afficher l\'évolution temporelle',
+  style: {stretch: 'horizontal', margin: '10px 0'}
+});
+mainPanel.add(chartButton);
+
+var compareButton = ui.Button({
+  label: '🔄 Comparer deux années',
+  style: {stretch: 'horizontal', margin: '10px 0'}
+});
+mainPanel.add(compareButton);
+
+// ========================================
+// SECTION 6: ANALYSE RÉGIONALE
+// ========================================
+
+var regionSection = ui.Label({
+  value: '🎯 Analyse par Région',
+  style: {
+    fontSize: '16px',
+    fontWeight: 'bold',
+    margin: '15px 0 5px 0'
+  }
+});
+mainPanel.add(regionSection);
+
+// Liste des régions
+var regionNames = gadm1.aggregate_array('NAME_1').getInfo();
+var regionSelect = ui.Select({
+  items: ['Toutes les régions'].concat(regionNames),
+  value: 'Toutes les régions',
+  placeholder: 'Sélectionner une région',
+  style: {stretch: 'horizontal'}
+});
+
+mainPanel.add(ui.Label('Sélectionner une région:'));
+mainPanel.add(regionSelect);
+
+var regionStatsPanel = ui.Panel({
+  style: {
+    backgroundColor: '#E3F2FD',
+    padding: '10px',
+    margin: '5px 0'
+  }
+});
+mainPanel.add(regionStatsPanel);
+
+// ========================================
+// BOUTON DE MISE À JOUR
+// ========================================
+
+var updateButton = ui.Button({
+  label: '🔄 Mettre à jour la carte',
+  style: {
+    stretch: 'horizontal',
+    backgroundColor: '#2E7D32',
+    color: 'white',
+    fontWeight: 'bold',
+    margin: '15px 0'
+  }
+});
+mainPanel.add(updateButton);
+
+// Bouton reset
+var resetButton = ui.Button({
+  label: '↺ Réinitialiser',
+  style: {stretch: 'horizontal', margin: '5px 0'}
+});
+mainPanel.add(resetButton);
+
+// Crédits
+var credits = ui.Label({
+  value: '© 2024 - TP Statistique Spatiale Exploratoire',
+  style: {
+    fontSize: '10px',
+    color: '#999',
+    margin: '20px 0 5px 0',
+    textAlign: 'center'
+  }
+});
+mainPanel.add(credits);
+
+// Ajouter le panel à l'interface
+ui.root.insert(0, mainPanel);
+
+// ========================================
+// FONCTIONS DE VISUALISATION
+// ========================================
+
+var emptyImg = ee.Image().byte();
+
+function updateMap() {
+  Map.layers().reset();
+  
+  var selectedYear = yearSlider.getValue();
+  yearLabel.setValue('Année: ' + selectedYear);
+  
+  var popImage = loadPopRaster(selectedYear);
+  
+  // Limites administratives
+  if (checkbox0.getValue()) {
+    var gadm0Outline = emptyImg.paint({
+      featureCollection: gadm0,
+      color: 1,
+      width: 5
+    });
+    Map.addLayer(gadm0Outline, {palette: 'FF0000'}, 'Frontière Nationale');
+  }
+  
+  if (checkbox1.getValue()) {
+    var gadm1WithID = gadm1.map(function(feat, idx) {
+      return feat.set('region_id', idx);
+    });
+    var gadm1Filled = emptyImg.paint(gadm1WithID, 'region_id');
+    Map.addLayer(gadm1Filled, {
+      palette: ['#e41a1c', '#377eb8', '#4daf4a', '#984ea3', '#ff7f00', 
+                '#ffff33', '#a65628', '#f781bf', '#66c2a5', '#fc8d62', 
+                '#8da0cb', '#e78ac3', '#a6d854'],
+      min: 0,
+      max: 12,
+      opacity: 0.5
+    }, 'Régions');
+    
+    var gadm1Outline = emptyImg.paint({
+      featureCollection: gadm1,
+      color: 1,
+      width: 2
+    });
+    Map.addLayer(gadm1Outline, {palette: '000000'}, 'Contours Régions');
+  }
+  
+  if (checkbox2.getValue()) {
+    var gadm2Outline = emptyImg.paint({
+      featureCollection: gadm2,
+      color: 1,
+      width: 1
+    });
+    Map.addLayer(gadm2Outline, {palette: 'FFA500'}, 'Provinces');
+  }
+  
+  if (checkbox3.getValue()) {
+    var gadm3Outline = emptyImg.paint({
+      featureCollection: gadm3,
+      color: 1,
+      width: 0.5
+    });
+    Map.addLayer(gadm3Outline, {palette: 'FFFF00'}, 'Départements');
+  }
+  
+  // Population
+  if (popCheckbox.getValue()) {
+    var popMode = popModeSelect.getValue();
+    
+    if (popMode === 'density') {
+      Map.addLayer(popImage, {
+        min: 0,
+        max: 500,
+        palette: ['#ffffff', '#fff5f0', '#fee0d2', '#fcbba1', '#fc9272', 
+                  '#fb6a4a', '#ef3b2c', '#cb181d', '#a50f15', '#67000d']
+      }, 'Densité Population ' + selectedYear);
+    }
+    
+    if (popMode === 'hotspot') {
+      var kernel = ee.Kernel.gaussian({
+        radius: 10000,
+        units: 'meters',
+        normalize: true
+      });
+      var popDensity = popImage.convolve(kernel);
+      Map.addLayer(popDensity, {
+        min: 0,
+        max: 2000,
+        palette: ['#440154', '#31688e', '#35b779', '#fde724']
+      }, 'Hotspots Population');
+    }
+    
+    if (popMode === 'gradient') {
+      var gradient = popImage.gradient();
+      var gradientMagnitude = gradient.select('x').pow(2)
+        .add(gradient.select('y').pow(2)).sqrt();
+      Map.addLayer(gradientMagnitude, {
+        min: 0,
+        max: 50,
+        palette: ['white', 'yellow', 'orange', 'red', 'darkred']
+      }, 'Gradient de Densité');
+    }
+    
+    if (popMode === 'choropleth') {
+      var popByRegion = popImage.reduceRegions({
+        collection: gadm1,
+        reducer: ee.Reducer.sum(),
+        scale: 500,
+        tileScale: 4
+      });
+      
+      var maxPop = popByRegion.aggregate_max('sum');
+      var minPop = popByRegion.aggregate_min('sum');
+      
+      var choropleth = popByRegion.map(function(feat) {
+        var value = ee.Number(feat.get('sum'));
+        var normalized = value.subtract(minPop)
+          .divide(ee.Number(maxPop).subtract(minPop));
+        return feat.set('pop_normalized', normalized);
+      });
+      
+      var choroplethImg = emptyImg.paint(choropleth, 'pop_normalized');
+      Map.addLayer(choroplethImg, {
+        palette: ['#ffffcc', '#ffeda0', '#fed976', '#feb24c', 
+                  '#fd8d3c', '#fc4e2a', '#e31a1c', '#bd0026', '#800026'],
+        min: 0,
+        max: 1
+      }, 'Population par Région');
+    }
+  }
+  
+  // Infrastructures
+  if (citiesCheckbox.getValue()) {
+    Map.addLayer(cities, {color: 'red'}, 'Villes');
+  }
+  
+  if (villagesCheckbox.getValue()) {
+    Map.addLayer(villages, {color: 'orange'}, 'Villages');
+  }
+  
+  if (schoolsCheckbox.getValue()) {
+    Map.addLayer(schools, {color: 'blue'}, 'Écoles');
+  }
+  
+  if (hospitalsCheckbox.getValue()) {
+    Map.addLayer(hospitals, {color: 'green'}, 'Hôpitaux');
+  }
+  
+  if (distanceCheckbox.getValue()) {
+    var hospitalsImg = ee.Image(0).byte().paint({
+      featureCollection: hospitals,
+      color: 1
+    });
+    
+    var distance = hospitalsImg.fastDistanceTransform({
+      neighborhood: 256,
+      units: 'pixels',
+      metric: 'squared_euclidean'
+    }).sqrt().multiply(ee.Image.pixelArea().sqrt());
+    
+    Map.addLayer(distance.clip(gadm0), {
+      min: 0,
+      max: 50000,
+      palette: ['green', 'yellow', 'orange', 'red']
+    }, 'Distance aux Hôpitaux (m)');
+  }
+  
+  // Calculer les statistiques
+  var stats = popImage.reduceRegion({
+    reducer: ee.Reducer.sum(),
+    geometry: gadm0.geometry(),
+    scale: 500,
+    maxPixels: 1e10,
+    bestEffort: true
+  });
+  
+  stats.evaluate(function(result) {
+    var total = result.b1;
+    if (total) {
+      statsPop.setValue('Population totale (' + selectedYear + '): ' + 
+        Math.round(total).toLocaleString() + ' habitants');
+    }
+  });
+}
+
+// ========================================
+// FONCTION ANALYSE RÉGIONALE
+// ========================================
+
+function updateRegionStats() {
+  var selectedRegion = regionSelect.getValue();
+  regionStatsPanel.clear();
+  
+  if (selectedRegion === 'Toutes les régions') {
+    regionStatsPanel.add(ui.Label('Sélectionnez une région pour voir les détails'));
+    return;
+  }
+  
+  var region = gadm1.filter(ee.Filter.eq('NAME_1', selectedRegion)).first();
+  var selectedYear = yearSlider.getValue();
+  var popImage = loadPopRaster(selectedYear);
+  
+  // Calculer les stats pour la région
+  var regionStats = popImage.reduceRegion({
+    reducer: ee.Reducer.sum(),
+    geometry: region.geometry(),
+    scale: 500,
+    maxPixels: 1e10
+  });
+  
+  var regionSchools = schools.filterBounds(region.geometry()).size();
+  var regionHospitals = hospitals.filterBounds(region.geometry()).size();
+  var regionCities = cities.filterBounds(region.geometry()).size();
+  
+  regionStats.evaluate(function(stats) {
+    var pop = Math.round(stats.b1);
+    
+    regionStatsPanel.add(ui.Label({
+      value: '📍 ' + selectedRegion,
+      style: {fontWeight: 'bold', fontSize: '14px'}
+    }));
+    
+    regionStatsPanel.add(ui.Label('Population: ' + pop.toLocaleString()));
+    
+    regionSchools.evaluate(function(s) {
+      regionStatsPanel.add(ui.Label('Écoles: ' + s));
+    });
+    
+    regionHospitals.evaluate(function(h) {
+      regionStatsPanel.add(ui.Label('Hôpitaux: ' + h));
+    });
+    
+    regionCities.evaluate(function(c) {
+      regionStatsPanel.add(ui.Label('Villes: ' + c));
+    });
+  });
+  
+  // Zoomer sur la région
+  Map.centerObject(region, 9);
+}
+
+// ========================================
+// FONCTION GRAPHIQUE TEMPOREL
+// ========================================
+
+function showTemporalChart() {
+  var chartPanel = ui.Panel({
+    style: {
+      width: '500px',
+      position: 'bottom-right'
+    }
+  });
+  
+  var keyYears = [2015, 2018, 2020, 2022, 2025];
+  var popStatsKey = keyYears.map(function(year) {
+    var img = loadPopRaster(year);
+    var stats = img.reduceRegion({
+      reducer: ee.Reducer.sum(),
+      geometry: gadm0.geometry(),
+      scale: 500,
+      maxPixels: 1e10,
+      bestEffort: true
+    });
+    
+    return ee.Feature(null, {
+      'year': year,
+      'sum': stats.get('b1')
+    });
+  });
+  
+  var popStats = ee.FeatureCollection(popStatsKey);
+  
+  var chart = ui.Chart.feature.byFeature({
+    features: popStats,
+    xProperty: 'year',
+    yProperties: ['sum']
+  }).setSeriesNames(['Population'])
+    .setOptions({
+    title: 'Évolution de la Population (2015-2025)',
+    hAxis: {title: 'Année', format: '####'},
+    vAxis: {title: 'Population Totale', format: 'short'},
+    lineWidth: 3,
+    pointSize: 6,
+    colors: ['#2E7D32']
+  });
+  
+  chartPanel.add(ui.Label({
+    value: '📈 Évolution Temporelle',
+    style: {fontWeight: 'bold', fontSize: '16px', margin: '10px'}
+  }));
+  
+  chartPanel.add(chart);
+  
+  var closeButton = ui.Button({
+    label: '✖ Fermer',
+    onClick: function() {
+      ui.root.remove(chartPanel);
+    }
+  });
+  chartPanel.add(closeButton);
+  
+  ui.root.add(chartPanel);
+}
+
+// ========================================
+// FONCTION COMPARAISON D'ANNÉES
+// ========================================
+
+function showComparison() {
+  var compPanel = ui.Panel({
+    style: {
+      width: '500px',
+      position: 'bottom-right'
+    }
+  });
+  
+  compPanel.add(ui.Label({
+    value: '🔄 Comparaison d\'années',
+    style: {fontWeight: 'bold', fontSize: '16px', margin: '10px'}
+  }));
+  
+  var year1Select = ui.Select({
+    items: years.map(function(y) { return String(y); }),
+    value: '2015',
+    placeholder: 'Année 1'
+  });
+  
+  var year2Select = ui.Select({
+    items: years.map(function(y) { return String(y); }),
+    value: '2025',
+    placeholder: 'Année 2'
+  });
+  
+  compPanel.add(ui.Label('Année 1:'));
+  compPanel.add(year1Select);
+  compPanel.add(ui.Label('Année 2:'));
+  compPanel.add(year2Select);
+  
+  var compareBtn = ui.Button({
+    label: 'Comparer',
+    onClick: function() {
+      var y1 = parseInt(year1Select.getValue());
+      var y2 = parseInt(year2Select.getValue());
+      
+      var pop1 = loadPopRaster(y1);
+      var pop2 = loadPopRaster(y2);
+      var diff = pop2.subtract(pop1);
+      
+      Map.addLayer(diff, {
+        min: -100,
+        max: 100,
+        palette: ['#d73027', '#fc8d59', '#fee090', '#ffffbf', 
+                  '#e0f3f8', '#91bfdb', '#4575b4']
+      }, 'Différence ' + y2 + ' - ' + y1);
+    }
+  });
+  
+  compPanel.add(compareBtn);
+  
+  var closeButton = ui.Button({
+    label: '✖ Fermer',
+    onClick: function() {
+      ui.root.remove(compPanel);
+    }
+  });
+  compPanel.add(closeButton);
+  
+  ui.root.add(compPanel);
+}
+
+// ========================================
+// ÉVÉNEMENTS
+// ========================================
+
+updateButton.onClick(updateMap);
+resetButton.onClick(function() {
+  yearSlider.setValue(2025);
+  checkbox0.setValue(true);
+  checkbox1.setValue(true);
+  checkbox2.setValue(false);
+  checkbox3.setValue(false);
+  popCheckbox.setValue(true);
+  popModeSelect.setValue('density');
+  citiesCheckbox.setValue(true);
+  villagesCheckbox.setValue(false);
+  schoolsCheckbox.setValue(true);
+  hospitalsCheckbox.setValue(true);
+  distanceCheckbox.setValue(false);
+  regionSelect.setValue('Toutes les régions');
+  Map.setCenter(-1.5, 12.3, 7);
+  updateMap();
+});
+
+chartButton.onClick(showTemporalChart);
+compareButton.onClick(showComparison);
+regionSelect.onChange(updateRegionStats);
+
+// ========================================
+// INITIALISATION
+// ========================================
+
+updateMap();
+
+print('✅ Application interactive chargée avec succès !');
+print('👉 Utilisez le panneau de gauche pour explorer les données');
+print('📊 Cliquez sur les boutons pour afficher les analyses');
