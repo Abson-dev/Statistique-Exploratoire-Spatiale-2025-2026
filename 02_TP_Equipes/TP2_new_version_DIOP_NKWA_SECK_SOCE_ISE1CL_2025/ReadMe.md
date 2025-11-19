@@ -7,11 +7,15 @@ Ce projet analyse la disposition des infrastructures et services essentiels au B
 ## Auteurs
 
 **Leslye Patricia NKWA**
+
 **Mouhamet SECK**
+
 **Joo Young Véridique Gabriel DIOP**
+
 **Math SOCE**
 
 **Classe :** ISE1 CL  
+
 **Année académique :** 2025-2026
 
 ## Structure du Projet
@@ -199,3 +203,4 @@ Les analyses ont permis de :
 
 
 Projet académique.
+
