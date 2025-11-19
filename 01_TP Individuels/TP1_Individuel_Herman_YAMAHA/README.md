@@ -37,8 +37,8 @@ TP1_Individuel_Herman_YAMAHA/
 ```
 
 ## Données utilisées
-### Données raster
-### Données vectorielles
+- Données raster
+- Données vectorielles
 
 ## Technologies et outils
 - **R / RStudio** : Environnement de développement principal
@@ -82,3 +82,4 @@ Les analyses ont permis de :
 ## Références
 - **GADM :** https://gadm.org/
 - **Données sur le paludisme :** https://data.malariaatlas.org/
+
