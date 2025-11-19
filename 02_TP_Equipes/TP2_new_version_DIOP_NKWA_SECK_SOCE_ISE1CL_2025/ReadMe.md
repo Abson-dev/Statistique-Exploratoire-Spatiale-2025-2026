@@ -2,7 +2,7 @@
 
 ## Description du Projet
 
-Ce projet analyse l'accessibilité des populations aux infrastructures et services essentiels au Bénin en utilisant des données géospatiales issues d'OpenStreetMap (OSM) et des données de population WorldPop. L'analyse permet d'évaluer la distribution spatiale des infrastructures de santé, d'éducation, de transport et d'identifier les zones sous-desservies nécessitant des interventions prioritaires.
+Ce projet analyse la disposition des infrastructures et services essentiels au Bénin en utilisant des données géospatiales issues d'OpenStreetMap (OSM). L'analyse permet d'évaluer la distribution spatiale des infrastructures de santé, d'éducation, de transport et d'identifier les zones sous-desservies nécessitant des interventions prioritaires.
 
 ## Auteurs
 
@@ -196,5 +196,6 @@ Les analyses ont permis de :
 
 
 ## Licence
+
 
 Projet académique.
