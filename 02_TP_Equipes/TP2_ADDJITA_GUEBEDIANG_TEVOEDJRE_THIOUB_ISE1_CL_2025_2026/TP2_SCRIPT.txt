@@ -1,0 +1,565 @@
+// ===================================================================
+// ANALYSE DES DISTANCES ENTRE INFRASTRUCTURES ET AIRES PROTÉGÉES
+// Sénégal - Google Earth Engine
+// ===================================================================
+
+// ===========================================
+// 1. CHARGEMENT DES DONNÉES
+// ===========================================
+
+// Nom du projet Cloud (CORRIGÉ: rosy-algebra, pas rose-algèbre)
+var cloudProject = "rosy-algebra-476610-q7";
+
+// Limites administratives du Sénégal
+var pays_sen = ee.FeatureCollection("projects/" + cloudProject + "/assets/gadm41_SEN_0");
+var regions = ee.FeatureCollection("projects/" + cloudProject + "/assets/gadm41_SEN_1");
+var departements = ee.FeatureCollection("projects/" + cloudProject + "/assets/gadm41_SEN_2");
+var communes = ee.FeatureCollection("projects/" + cloudProject + "/assets/gadm41_SEN_3");
+var arrondissements = ee.FeatureCollection("projects/" + cloudProject + "/assets/gadm41_SEN_4");
+
+// Aires protégées (zones réservées)
+var aires_protegees_points_0 = ee.FeatureCollection("projects/" + cloudProject + "/assets/shp0points");
+var aires_protegees_polygons_0 = ee.FeatureCollection("projects/" + cloudProject + "/assets/shp0polygons");
+var aires_protegees_points_1 = ee.FeatureCollection("projects/" + cloudProject + "/assets/shp1points");
+var aires_protegees_polygons_1 = ee.FeatureCollection("projects/" + cloudProject + "/assets/shp1polygons");
+var aires_protegees_points_2 = ee.FeatureCollection("projects/" + cloudProject + "/assets/shp2points");
+var aires_protegees_polygons_2 = ee.FeatureCollection("projects/" + cloudProject + "/assets/shp2polygons");
+
+// Fusionner toutes les aires protégées
+var aires_protegees_sen = aires_protegees_polygons_0
+  .merge(aires_protegees_polygons_1)
+  .merge(aires_protegees_polygons_2);
+
+// Infrastructures
+var cities = ee.FeatureCollection("projects/" + cloudProject + "/assets/cities_100");
+var clinics = ee.FeatureCollection("projects/" + cloudProject + "/assets/clinics_100");
+var hamlets = ee.FeatureCollection("projects/" + cloudProject + "/assets/hamlets_100");
+var hospitals = ee.FeatureCollection("projects/" + cloudProject + "/assets/hospitals_100");
+var pharmacies = ee.FeatureCollection("projects/" + cloudProject + "/assets/pharmacies_100");
+var schools = ee.FeatureCollection("projects/" + cloudProject + "/assets/schools_100");
+var suburbs = ee.FeatureCollection("projects/" + cloudProject + "/assets/suburbs_100");
+var towns = ee.FeatureCollection("projects/" + cloudProject + "/assets/towns_100");
+var villages = ee.FeatureCollection("projects/" + cloudProject + "/assets/villages_100");
+
+// ===========================================
+// 2. VÉRIFICATION DÉTAILLÉE DES DONNÉES
+// ===========================================
+
+print("========================================");
+print("=== VÉRIFICATION DES DONNÉES ===");
+print("========================================");
+
+// Fonction pour inspecter une FeatureCollection
+function inspectFeatureCollection(fc, name) {
+  print("\n--- " + name + " ---");
+  print("Nombre d'entités:", fc.size());
+  print("Aperçu (5 premières):", fc.limit(5));
+  
+  // Afficher les propriétés de la première entité
+  fc.first().propertyNames().evaluate(function(names){
+    print("Propriétés disponibles:", names);
+  });
+  
+  // Afficher détails client-side
+  fc.limit(3).evaluate(function(res){
+    console.log(name + " - Détails (client):", res);
+  });
+}
+
+// Vérification des limites administratives
+print("\n### LIMITES ADMINISTRATIVES ###");
+inspectFeatureCollection(pays_sen, "Pays (gadm41_SEN_0)");
+inspectFeatureCollection(regions, "Régions (gadm41_SEN_1)");
+inspectFeatureCollection(departements, "Départements (gadm41_SEN_2)");
+inspectFeatureCollection(communes, "Communes (gadm41_SEN_3)");
+inspectFeatureCollection(arrondissements, "Arrondissements (gadm41_SEN_4)");
+
+// Vérification des aires protégées
+print("\n### AIRES PROTÉGÉES ###");
+inspectFeatureCollection(aires_protegees_points_0, "Aires protégées points (niveau 0)");
+inspectFeatureCollection(aires_protegees_polygons_0, "Aires protégées polygones (niveau 0)");
+inspectFeatureCollection(aires_protegees_points_1, "Aires protégées points (niveau 1)");
+inspectFeatureCollection(aires_protegees_polygons_1, "Aires protégées polygones (niveau 1)");
+inspectFeatureCollection(aires_protegees_points_2, "Aires protégées points (niveau 2)");
+inspectFeatureCollection(aires_protegees_polygons_2, "Aires protégées polygones (niveau 2)");
+inspectFeatureCollection(aires_protegees_sen, "AIRES PROTÉGÉES FUSIONNÉES");
+
+// Vérification des infrastructures
+print("\n### INFRASTRUCTURES ###");
+inspectFeatureCollection(cities, "Cities");
+inspectFeatureCollection(clinics, "Clinics");
+inspectFeatureCollection(hamlets, "Hamlets");
+inspectFeatureCollection(hospitals, "Hospitals");
+inspectFeatureCollection(pharmacies, "Pharmacies");
+inspectFeatureCollection(schools, "Schools");
+inspectFeatureCollection(suburbs, "Suburbs");
+inspectFeatureCollection(towns, "Towns");
+inspectFeatureCollection(villages, "Villages");
+
+// Résumé des comptages
+print("\n### RÉSUMÉ DES COMPTAGES ###");
+var counts = {
+  'Pays': pays_sen.size(),
+  'Régions': regions.size(),
+  'Départements': departements.size(),
+  'Communes': communes.size(),
+  'Arrondissements': arrondissements.size(),
+  'Aires protégées (total)': aires_protegees_sen.size(),
+  'Cities': cities.size(),
+  'Clinics': clinics.size(),
+  'Hamlets': hamlets.size(),
+  'Hospitals': hospitals.size(),
+  'Pharmacies': pharmacies.size(),
+  'Schools': schools.size(),
+  'Suburbs': suburbs.size(),
+  'Towns': towns.size(),
+  'Villages': villages.size()
+};
+print(counts);
+
+// ===========================================
+// 3. CONFIGURATION DE LA CARTE
+// ===========================================
+
+// Centrer sur le Sénégal
+Map.centerObject(pays_sen, 7);
+
+// ===========================================
+// 4. VISUALISATION DES COUCHES
+// ===========================================
+
+// Style pour les limites administratives
+Map.addLayer(pays_sen, {color: '000000'}, 'Sénégal (pays)', false);
+Map.addLayer(regions, {color: '555555'}, 'Régions', false);
+Map.addLayer(departements, {color: '888888'}, 'Départements', false);
+
+// Style pour les aires protégées
+var airesStyle = {
+  color: '00FF00',
+  fillColor: '00FF0030'
+};
+Map.addLayer(aires_protegees_sen.style(airesStyle), {}, 'Aires protégées', true);
+
+// Style pour les infrastructures (points)
+Map.addLayer(cities, {color: 'FF0000'}, 'Cities', false);
+Map.addLayer(clinics, {color: 'FF69B4'}, 'Clinics', false);
+Map.addLayer(hamlets, {color: 'FFA500'}, 'Hamlets', false);
+Map.addLayer(hospitals, {color: 'FF0000'}, 'Hospitals', false);
+Map.addLayer(pharmacies, {color: '00CED1'}, 'Pharmacies', false);
+Map.addLayer(schools, {color: '0000FF'}, 'Schools', false);
+Map.addLayer(suburbs, {color: 'FFD700'}, 'Suburbs', false);
+Map.addLayer(towns, {color: 'FF4500'}, 'Towns', false);
+Map.addLayer(villages, {color: '8B4513'}, 'Villages', false);
+
+// ===========================================
+// 5. FONCTION DE CALCUL DES DISTANCES
+// ===========================================
+
+function createDistanceRaster(features, maxDistance) {
+  // Ajouter une propriété constante pour la conversion en raster
+  var featuresWithValue = features.map(function(f) {
+    return f.set('constant', 1);
+  });
+  
+  // Convertir les features en image
+  var image = featuresWithValue.reduceToImage({
+    properties: ['constant'],  
+    reducer: ee.Reducer.first()
+  }).unmask();
+  
+  // Calculer la distance euclidienne en mètres
+  var distance = image.fastDistanceTransform({
+    neighborhood: 256,
+    units: 'pixels',
+    metric: 'squared_euclidean'
+  }).sqrt().multiply(ee.Image.pixelArea().sqrt());
+  
+  return distance.rename('distance');
+}
+
+// ===========================================
+// 6. CRÉATION DES RASTERS DE DISTANCE
+// ===========================================
+
+print("=== CRÉATION DES RASTERS DE DISTANCE ===");
+
+var cities_dist = createDistanceRaster(cities, 100000);
+var clinics_dist = createDistanceRaster(clinics, 100000);
+var hamlets_dist = createDistanceRaster(hamlets, 100000);
+var hospitals_dist = createDistanceRaster(hospitals, 100000);
+var pharmacies_dist = createDistanceRaster(pharmacies, 100000);
+var schools_dist = createDistanceRaster(schools, 100000);
+var suburbs_dist = createDistanceRaster(suburbs, 100000);
+var towns_dist = createDistanceRaster(towns, 100000);
+var villages_dist = createDistanceRaster(villages, 100000);
+
+print("✓ Rasters de distance créés");
+
+// ===========================================
+// 7. VISUALISATION DES DISTANCES
+// ===========================================
+
+var visParams = {
+  min: 0,
+  max: 50000, // 50 km
+  palette: ['blue', 'cyan', 'lime', 'yellow', 'orange', 'red']
+};
+
+Map.addLayer(cities_dist.clip(pays_sen), visParams, 'Distance aux cities (m)', false);
+Map.addLayer(clinics_dist.clip(pays_sen), visParams, 'Distance aux clinics (m)', false);
+Map.addLayer(hamlets_dist.clip(pays_sen), visParams, 'Distance aux hamlets (m)', false);
+Map.addLayer(hospitals_dist.clip(pays_sen), visParams, 'Distance aux hospitals (m)', false);
+Map.addLayer(pharmacies_dist.clip(pays_sen), visParams, 'Distance aux pharmacies (m)', false);
+Map.addLayer(schools_dist.clip(pays_sen), visParams, 'Distance aux schools (m)', false);
+Map.addLayer(suburbs_dist.clip(pays_sen), visParams, 'Distance aux suburbs (m)', false);
+Map.addLayer(towns_dist.clip(pays_sen), visParams, 'Distance aux towns (m)', false);
+Map.addLayer(villages_dist.clip(pays_sen), visParams, 'Distance aux villages (m)', false);
+
+// ===========================================
+// 7bis. ZONES TAMPONS DE 10 KM AUTOUR DES AIRES PROTÉGÉES
+// ===========================================
+
+print("\n========================================");
+print("=== CRÉATION DES ZONES TAMPONS (10 KM) ===");
+print("========================================");
+
+// Créer une zone tampon de 10km (10000 mètres) autour des aires protégées
+var buffer_10km = aires_protegees_sen.map(function(feature) {
+  return feature.buffer(10000);
+});
+
+// Fusionner tous les buffers en une seule géométrie
+var buffer_10km_union = buffer_10km.union();
+
+// Visualiser la zone tampon de 10km
+var bufferStyle = {
+  color: 'FFFF00',
+  fillColor: 'FFFF0030',
+  width: 2
+};
+Map.addLayer(buffer_10km_union.style(bufferStyle), {}, 'Zone tampon 10km (aires protégées)', true);
+
+print("✓ Zone tampon de 10km créée et affichée");
+
+// ===========================================
+// 8. CALCUL DES STATISTIQUES PAR AIRE PROTÉGÉE
+// ===========================================
+
+print("=== CALCUL DES STATISTIQUES ===");
+
+// Fonction pour calculer les stats (mean, min, max)
+function calculateStats(distanceRaster, protectedAreas, infrastructureName) {
+  var stats = distanceRaster.reduceRegions({
+    collection: protectedAreas,
+    reducer: ee.Reducer.mean()
+      .combine({reducer2: ee.Reducer.min(), sharedInputs: true})
+      .combine({reducer2: ee.Reducer.max(), sharedInputs: true}),
+    scale: 100,
+    crs: 'EPSG:4326'
+  });
+  
+  return stats;
+}
+
+// Calculer les stats pour chaque infrastructure
+var stats_cities = calculateStats(cities_dist, aires_protegees_sen, 'cities');
+var stats_clinics = calculateStats(clinics_dist, aires_protegees_sen, 'clinics');
+var stats_hamlets = calculateStats(hamlets_dist, aires_protegees_sen, 'hamlets');
+var stats_hospitals = calculateStats(hospitals_dist, aires_protegees_sen, 'hospitals');
+var stats_pharmacies = calculateStats(pharmacies_dist, aires_protegees_sen, 'pharmacies');
+var stats_schools = calculateStats(schools_dist, aires_protegees_sen, 'schools');
+var stats_suburbs = calculateStats(suburbs_dist, aires_protegees_sen, 'suburbs');
+var stats_towns = calculateStats(towns_dist, aires_protegees_sen, 'towns');
+var stats_villages = calculateStats(villages_dist, aires_protegees_sen, 'villages');
+
+// ===========================================
+// 9. AFFICHAGE DÉTAILLÉ DES RÉSULTATS
+// ===========================================
+
+print("\n========================================");
+print("=== STATISTIQUES PAR AIRE PROTÉGÉE ===");
+print("========================================");
+
+// Fonction pour afficher les stats de manière détaillée
+function displayDetailedStats(stats, infrastructureName) {
+  print("\n### " + infrastructureName.toUpperCase() + " ###");
+  print("Aperçu des 5 premières aires protégées:", stats.limit(5));
+  
+  // Afficher les propriétés disponibles
+  stats.first().propertyNames().evaluate(function(names){
+    print("Propriétés disponibles:", names);
+  });
+  
+  // Afficher détails client-side pour inspection
+  stats.limit(3).evaluate(function(res){
+    console.log(infrastructureName + " - Détails statistiques (client):", res);
+  });
+}
+
+displayDetailedStats(stats_cities, 'Cities');
+displayDetailedStats(stats_clinics, 'Clinics');
+displayDetailedStats(stats_hamlets, 'Hamlets');
+displayDetailedStats(stats_hospitals, 'Hospitals');
+displayDetailedStats(stats_pharmacies, 'Pharmacies');
+displayDetailedStats(stats_schools, 'Schools');
+displayDetailedStats(stats_suburbs, 'Suburbs');
+displayDetailedStats(stats_towns, 'Towns');
+displayDetailedStats(stats_villages, 'Villages');
+
+// ===========================================
+// 10. STATISTIQUES GLOBALES DÉTAILLÉES - CORRIGÉ
+// ===========================================
+
+print("\n========================================");
+print("=== STATISTIQUES GLOBALES ===");
+print("========================================");
+print("(moyennes calculées sur toutes les aires protégées)\n");
+
+// Fonction CORRIGÉE pour afficher les stats globales
+function displayGlobalStats(stats, infrastructureName) {
+  // Récupérer les valeurs avec evaluate() pour éviter l'affichage des objets ee.Number
+  stats.aggregate_mean('mean').evaluate(function(meanVal) {
+    stats.aggregate_min('min').evaluate(function(minVal) {
+      stats.aggregate_max('max').evaluate(function(maxVal) {
+        print("--- " + infrastructureName + " ---");
+        if (meanVal !== null) {
+          print("  Distance moyenne : " + (meanVal/1000).toFixed(2) + " km");
+          print("  Distance minimale : " + (minVal/1000).toFixed(2) + " km");
+          print("  Distance maximale : " + (maxVal/1000).toFixed(2) + " km");
+        } else {
+          print("  Données non disponibles");
+        }
+      });
+    });
+  });
+}
+
+// Afficher les statistiques globales
+displayGlobalStats(stats_cities, 'CITIES');
+displayGlobalStats(stats_clinics, 'CLINICS');
+displayGlobalStats(stats_hamlets, 'HAMLETS');
+displayGlobalStats(stats_hospitals, 'HOSPITALS');
+displayGlobalStats(stats_pharmacies, 'PHARMACIES');
+displayGlobalStats(stats_schools, 'SCHOOLS');
+displayGlobalStats(stats_suburbs, 'SUBURBS');
+displayGlobalStats(stats_towns, 'TOWNS');
+displayGlobalStats(stats_villages, 'VILLAGES');
+
+// Tableau récapitulatif simplifié
+print("\n### TABLEAU RÉCAPITULATIF (en km) ###");
+
+// Fonction pour le tableau récapitulatif
+function createSummaryTable() {
+  var infrastructures = [
+    {name: 'CITIES', stats: stats_cities},
+    {name: 'CLINICS', stats: stats_clinics},
+    {name: 'HAMLETS', stats: stats_hamlets},
+    {name: 'HOSPITALS', stats: stats_hospitals},
+    {name: 'PHARMACIES', stats: stats_pharmacies},
+    {name: 'SCHOOLS', stats: stats_schools},
+    {name: 'SUBURBS', stats: stats_suburbs},
+    {name: 'TOWNS', stats: stats_towns},
+    {name: 'VILLAGES', stats: stats_villages}
+  ];
+  
+  infrastructures.forEach(function(infra) {
+    infra.stats.aggregate_mean('mean').evaluate(function(meanVal) {
+      if (meanVal !== null) {
+        print(infra.name + " - Moyenne: " + (meanVal/1000).toFixed(2) + " km");
+      }
+    });
+  });
+}
+
+createSummaryTable();
+
+// ===========================================
+// 11. FONCTION D'EXPORT AMÉLIORÉE
+// ===========================================
+
+function exportStatsToCSV(stats_collection, infrastructure_name) {
+  // Vérifier d'abord les propriétés disponibles
+  stats_collection.first().propertyNames().evaluate(function(names){
+    print('Propriétés disponibles pour ' + infrastructure_name + ':', names);
+  });
+  
+  Export.table.toDrive({
+    collection: stats_collection,
+    description: 'export_distance_' + infrastructure_name,
+    fileNamePrefix: 'stats_distance_' + infrastructure_name + '_' + Date.now(),
+    fileFormat: 'CSV',
+    folder: 'GEE_Exports_Senegal',
+    selectors: ['NAME', 'mean', 'min', 'max'] // Adapter selon les propriétés disponibles
+  });
+  
+  print('✓ Export créé pour : ' + infrastructure_name);
+  print('  → Fichier: stats_distance_' + infrastructure_name + '.csv');
+  print('  → Dossier: GEE_Exports_Senegal');
+}
+
+// Fonction pour exporter les comptages par aire protégée
+function exportCountsPerAreaToCSV(counts_collection, infrastructure_name) {
+  counts_collection.first().propertyNames().evaluate(function(names){
+    print('Propriétés disponibles pour comptage ' + infrastructure_name + ':', names);
+  });
+  
+  Export.table.toDrive({
+    collection: counts_collection,
+    description: 'export_count_10km_' + infrastructure_name,
+    fileNamePrefix: 'count_10km_' + infrastructure_name + '_' + Date.now(),
+    fileFormat: 'CSV',
+    folder: 'GEE_Exports_Senegal'
+  });
+  
+  print('✓ Export des comptages créé pour : ' + infrastructure_name);
+}
+
+// Fonction pour exporter un résumé global
+function exportGlobalSummary() {
+  // Créer une feature collection avec le résumé
+  var summary = ee.FeatureCollection([
+    ee.Feature(null, {
+      infrastructure: 'cities',
+      mean: stats_cities.aggregate_mean('mean'),
+      min: stats_cities.aggregate_min('min'),
+      max: stats_cities.aggregate_max('max')
+    }),
+    ee.Feature(null, {
+      infrastructure: 'clinics',
+      mean: stats_clinics.aggregate_mean('mean'),
+      min: stats_clinics.aggregate_min('min'),
+      max: stats_clinics.aggregate_max('max')
+    }),
+    ee.Feature(null, {
+      infrastructure: 'hamlets',
+      mean: stats_hamlets.aggregate_mean('mean'),
+      min: stats_hamlets.aggregate_min('min'),
+      max: stats_hamlets.aggregate_max('max')
+    }),
+    ee.Feature(null, {
+      infrastructure: 'hospitals',
+      mean: stats_hospitals.aggregate_mean('mean'),
+      min: stats_hospitals.aggregate_min('min'),
+      max: stats_hospitals.aggregate_max('max')
+    }),
+    ee.Feature(null, {
+      infrastructure: 'pharmacies',
+      mean: stats_pharmacies.aggregate_mean('mean'),
+      min: stats_pharmacies.aggregate_min('min'),
+      max: stats_pharmacies.aggregate_max('max')
+    }),
+    ee.Feature(null, {
+      infrastructure: 'schools',
+      mean: stats_schools.aggregate_mean('mean'),
+      min: stats_schools.aggregate_min('min'),
+      max: stats_schools.aggregate_max('max')
+    }),
+    ee.Feature(null, {
+      infrastructure: 'suburbs',
+      mean: stats_suburbs.aggregate_mean('mean'),
+      min: stats_suburbs.aggregate_min('min'),
+      max: stats_suburbs.aggregate_max('max')
+    }),
+    ee.Feature(null, {
+      infrastructure: 'towns',
+      mean: stats_towns.aggregate_mean('mean'),
+      min: stats_towns.aggregate_min('min'),
+      max: stats_towns.aggregate_max('max')
+    }),
+    ee.Feature(null, {
+      infrastructure: 'villages',
+      mean: stats_villages.aggregate_mean('mean'),
+      min: stats_villages.aggregate_min('min'),
+      max: stats_villages.aggregate_max('max')
+    })
+  ]);
+  
+  Export.table.toDrive({
+    collection: summary,
+    description: 'export_resume_global',
+    fileNamePrefix: 'resume_global_distances_' + Date.now(),
+    fileFormat: 'CSV',
+    folder: 'GEE_Exports_Senegal'
+  });
+  
+  print('✓ Export du résumé global créé');
+}
+
+
+
+// ===========================================
+// 12. LANCER LES EXPORTS (décommenter pour utiliser)
+// ===========================================
+
+print("\n========================================");
+print("=== OPTIONS D'EXPORT ===");
+print("========================================");
+print("Décommentez les lignes ci-dessous pour exporter les résultats\n");
+
+// Décommentez les lignes ci-dessous pour exporter les résultats détaillés
+
+print("Création des exports...");
+
+// --- EXPORTS DES DISTANCES ---
+print("\n1. Exports des statistiques de distance:");
+exportStatsToCSV(stats_cities, 'cities');
+exportStatsToCSV(stats_clinics, 'clinics');
+exportStatsToCSV(stats_hamlets, 'hamlets');
+exportStatsToCSV(stats_hospitals, 'hospitals');
+exportStatsToCSV(stats_pharmacies, 'pharmacies');
+exportStatsToCSV(stats_schools, 'schools');
+exportStatsToCSV(stats_suburbs, 'suburbs');
+exportStatsToCSV(stats_towns, 'towns');
+exportStatsToCSV(stats_villages, 'villages');
+
+// Export du résumé global des distances
+exportGlobalSummary();
+
+
+print("\n========================================");
+print("=== EXPORTS CRÉÉS ===");
+print("========================================");
+print("✓ 9 fichiers de statistiques de distance");
+print("✓ 1 fichier de résumé global des distances");
+print("✓ TOTAL: 20 fichiers CSV");
+print("\n→ Allez dans l'onglet 'Tasks' (en haut à droite)");
+print("→ Cliquez sur 'RUN' pour chaque export");
+print("→ Les fichiers seront sauvegardés dans Google Drive");
+print("→ Dossier: GEE_Exports_Senegal");
+
+
+// ===========================================
+// FIN DU SCRIPT
+// ===========================================
+
+print("\n========================================");
+print("=== SCRIPT TERMINÉ AVEC SUCCÈS ===");
+print("========================================");
+print("\n📊 Résultats disponibles:");
+print("  ✓ Console: Statistiques détaillées et propriétés");
+print("  ✓ Carte: Visualisations interactives");
+print("  ✓ Console du navigateur: Détails client-side (F12)");
+print("  ✓ Zone tampon 10km: Visible sur la carte (jaune)");
+print("  ✓ Comptages: Nombre d'infrastructures à 10km");
+print("\n🗺️ Couches disponibles sur la carte:");
+print("  • Aires protégées (vert)");
+print("  • Zone tampon 10km (jaune) - ACTIVÉE");
+print("  • 9 rasters de distance (bleu → rouge)");
+print("  • 9 infrastructures dans la zone 10km (rouge)");
+print("\n📈 Statistiques calculées:");
+print("  • Distance moyenne, min, max par aire protégée");
+print("  • Statistiques globales (toutes aires)");
+print("  • Comptage total à 10km");
+print("  • Comptage par aire protégée (buffer 10km)");
+print("\n💡 Prochaines étapes:");
+print("  1. Explorer les couches sur la carte");
+print("  2. Activer/désactiver 'Zone tampon 10km' et les infrastructures");
+print("  3. Vérifier les comptages dans la console");
+print("  4. Décommenter les exports (section 12) pour sauvegarder");
+print("  5. Aller dans 'Tasks' → 'RUN' pour chaque export");
+print("\n📁 Exports disponibles (20 fichiers):");
+print("  • 9 fichiers: Statistiques de distance");
+print("  • 1 fichier: Résumé global des distances");
+print("  • 9 fichiers: Comptages par aire protégée (10km)");
+print("  • 1 fichier: Résumé des comptages totaux (10km)");
+print("\n========================================");

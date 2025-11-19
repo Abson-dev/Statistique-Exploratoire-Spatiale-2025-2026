@@ -1,0 +1,443 @@
+# Chemin du nouveau répertoire d'outputs
+output_dir <- file.path(base_path, "outputs")
+
+# Créer le répertoire 'outputs' s'il n'existe pas
+if (!dir.exists(output_dir)) {
+  dir.create(output_dir, recursive = TRUE)
+  cat("Dossier de sortie créé à l'emplacement :", output_dir, "\n")
+} else {
+  cat("Le dossier de sortie existe déjà :", output_dir, "\n")
+}
+
+# Importation du shapefile des tronçons de cours d'eau
+TCE_shp <- file.path(base_path, "/data/data2/202303-osm2igeo-cameroun-shp-wgs84-4326/202303_OSM2IGEO_CAMEROUN_SHP_WGS84_4326/D_OSM_HYDROGRAPHIE/TRONCON_COURS_EAU.shp")
+
+
+# Importation du shapefile du Cameroun
+CMR_shp_0 <- file.path(base_path, "/data/data2/shapefiles_limites_administratives_GADM_Cameroun/gadm41_CMR_0.shp")
+CMR_shp_1 <- file.path(base_path, "/data/data2/shapefiles_limites_administratives_GADM_Cameroun/gadm41_CMR_1.shp")
+
+# Lecture du shapefile des tronçons de cours d'eau
+Cours_eau <- st_read(TCE_shp)
+
+# Lecture du shapefile du cameroun
+cameroun_limite_0 <- st_read(CMR_shp_0)
+cameroun_limite_1 <- st_read(CMR_shp_1)
+
+
+# Aperçu des données
+print(head(Cours_eau))
+print(st_crs(Cours_eau)) # Système de coordonnées
+
+print(st_crs(cameroun_limite_0))
+
+
+# Visualisation statique des cours d'eau sur la carte du Cameroun
+ggplot() +
+  
+  # Couche de font (Cameroun)
+  geom_sf(data = cameroun_limite_1, 
+          fill = "grey95", 
+          color = "grey10", 
+          size = 0.5) +
+  
+  # Couche principale
+  geom_sf(data = Cours_eau, 
+          aes(fill = "Tronçon de cours d'eau"), 
+          color = "blue", 
+          size = 0.5) +
+  
+  # Configuration des couleurs et de la légende
+  scale_fill_manual(values = "blue", name = "Légende :") +
+  
+  # Ajout de titres et informations
+  labs(title = "Visualisation des tronçons de cours d'eau du Cameroun",
+       caption = paste(
+         "              Nombre de cours d'eau :", nrow(Cours_eau), 
+         "\n\nSource : GADM (Carte du Cameroun) & OpenStreetMap (Tronçons de cours d'eau)"
+       )
+  ) +
+  
+  # Thème pour une meilleure présentation
+  theme_minimal() +
+  
+  # Ajustement de la taille, de la légende et de la caption
+  theme(
+    
+    aspect.ratio = 1.2, 
+    axis.title = element_blank(),
+    axis.text = element_blank(),
+    axis.ticks = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    
+    # Déplacement la légende à gauche
+    legend.position = "right",
+    
+    # Centrage du texte de la caption (nombre d'aires et sources) en bas
+    plot.caption = element_text(hjust = 0.3, size = 10, color = "grey30"),
+    
+    # Ajustement la marge du titre pour libérer l'espace en haut
+    plot.title = element_text(hjust = 0.1, face = "bold"),
+  )
+
+
+# Chemin complet pour l'enregistrement
+output_file_path <- file.path(output_dir, "carte_statique_tronçons_cours_eau.png")
+
+# Enregistrer le graphique
+ggsave(filename = output_file_path,
+       width = 8, 
+       height = 10, 
+       units = "in",
+       dpi = 300)
+
+
+
+
+
+# Visualisation dynamique des cours d'eau sur la carte du Cameroun
+
+carte_tmap <- 
+  tm_shape(cameroun_limite_1) +
+  tm_borders(col = "grey10", lwd = 2) +
+  
+  # Couche principale (Cours d'eau)
+  tm_shape(Cours_eau) +
+  tm_lines(col = "blue", lwd = 1) + 
+  
+  # Ajout d'une légende
+  tm_add_legend(
+    type = "line", 
+    col = "blue",
+    lwd = 1,     
+    labels = "Tronçon de cours d'eau", 
+    title = "Légende :"
+  ) +
+  
+  # Mise en page 
+  tm_layout(
+    title = "Cours d'eau du Cameroun",
+    title.position = c("center", "top"),
+    title.size = 1.2,
+    
+    # Positionnement de la légende
+    legend.position = c("right", "top"),
+    legend.title.size = 0.6,
+    legend.text.size = 0.4,
+    
+    frame = FALSE, # Retrait de l'encadrement
+    inner.margins = c(0.01, 0.01, 0.01, 0.01)
+  ) +
+  
+  # Ajout des informations en bas de page
+  tm_credits(text = paste("Nombre de tronçons :", nrow(Cours_eau)),
+             position = c("left", "bottom"), 
+             size = 0.7, col = "grey30") +
+  tm_credits(text = "Source : OpenStreetMap & GADM",
+             position = c("right", "bottom"), 
+             size = 0.6, col = "grey30", align = "right")
+
+
+# 3. Affichage Dynamique
+tmap_mode("view") 
+#print(carte_tmap)
+
+
+
+
+# Répartition des cours d'eau selon leur régime 
+freq <- table(Cours_eau$REGIME, useNA = "ifany")
+prop <- prop.table(freq) * 100
+res <- cbind(Effectif = freq, Pourcentage = round(prop, 2))
+res <- rbind(res, Total = c(sum(freq), 100))
+
+cat("Répartition des cours d'eau selon leur régime :")
+res
+
+
+
+# Répartition des cours d'eau selon leur état (naturel ou artificiel)
+
+freq <- table(Cours_eau$ARTIF, useNA = "ifany")
+prop <- prop.table(freq) * 100
+res <- cbind(Effectif = freq, Pourcentage = round(prop, 2))
+res <- rbind(res, Total = c(sum(freq), 100))
+
+cat("Répartition des cours d'eau selon leur état (naturel ou artificiel) :")
+res
+
+
+# Le nombre de cours d'eau qui passe par région :
+
+# Jointure Spatiale : Associer chaque tronçon de cours d'eau à toutes les régions qu'il touche
+# st_intersects est plus inclusif pour les lignes traversant les polygones.
+cours_eau_par_region <- st_join(
+  Cours_eau, 
+  cameroun_limite_1,
+  join = st_intersects, # Jointure si le tronçon coupe, touche ou chevauche la région
+  left = FALSE # Ne garder que les tronçons qui intersectent au moins une région
+)
+
+# Agrégation : Compter le nombre de tronçons pour chaque région
+# NAME_1 est la colonne contenant le nom de la région GADM (Niveau 1).
+repartition_finale <- cours_eau_par_region %>%
+  st_drop_geometry() %>% # Retire la géométrie
+  group_by(NAME_1) %>%
+  tally(name = "Nombre_de_Tronçons_de_Cours_d_eau") %>%
+  ungroup() %>%
+  # Trier par nombre de tronçons décroissant pour la lisibilité
+  arrange(desc(Nombre_de_Tronçons_de_Cours_d_eau))
+
+# 3. Afficher le résultat
+cat("--- Nombre de tronçons de cours d'eau par Région --- \n")
+print(repartition_finale)
+cat("\nNote : Un même tronçon est compté dans toutes les régions qu'il traverse.\n")
+
+
+
+# --- CRÉATION DU DIAGRAMME EN BARRES ---
+
+repartition_finale <- repartition_finale %>%
+  mutate(NAME_1 = reorder(NAME_1, Nombre_de_Tronçons_de_Cours_d_eau))
+
+ggplot(repartition_finale, 
+       aes(x = Nombre_de_Tronçons_de_Cours_d_eau, y = NAME_1)) +
+  
+  # 1. Couche des barres
+  geom_bar(stat = "identity", 
+           fill = "skyblue3", 
+           color = "black", 
+           width = 0.8) +
+  
+  # 2. Ajout des étiquettes (valeurs numériques) sur chaque barre
+  geom_text(aes(label = Nombre_de_Tronçons_de_Cours_d_eau), 
+            hjust = -0.1,  # Positionne le texte juste à droite de la barre
+            size = 3.5) +
+  
+  # 3. Configuration des axes et du titre
+  labs(title = "Nombre de tronçons de cours d'eau par région au Cameroun",
+       subtitle = "Note : Un même tronçon est compté dans toutes les régions qu'il traverse.",
+       x = "Nombre de tronçons de cours d'eau",
+       y = "Région Administrative",
+       caption = "Source : OpenStreetMap (Cours d'eau) & GADM (Limites administratives)" ) +
+  
+  # 4. Thème pour une meilleure présentation
+  theme_minimal() +
+  
+  # 5. Ajustements finaux du thème
+  theme(
+    plot.title = element_text(hjust = 0.5, face = "bold"),
+    plot.subtitle = element_text(hjust = 0.5),
+    # Ajuste l'échelle de l'axe X pour laisser de la place aux étiquettes
+    axis.text.x = element_text(angle = 45, hjust = 1) 
+  ) +
+  
+  # S'assure que les étiquettes ne sont pas coupées à droite
+  scale_x_continuous(expand = expansion(mult = c(0.01, 0.15)))
+
+
+# Chemin complet pour l'enregistrement
+output_file_path <- file.path(output_dir, "Nombre_tronçons_eau_par_region.png")
+
+# Enregistrer le graphique
+ggsave(filename = output_file_path,
+       width = 8, 
+       height = 10, 
+       units = "in",
+       dpi = 300)
+
+
+# Longueur totale effective des cours d'eau par région
+
+# Transformer les objets vers un SCR métrique (UTM 33N, unité = mètre)
+CRS_METRIQUE <- 32633 
+
+regions_cameroun_projete <- st_transform(cameroun_limite_1, crs = CRS_METRIQUE)
+Cours_eau_projete <- st_transform(Cours_eau, crs = CRS_METRIQUE)
+
+# 1. Intersection Spatiale (Découpage)
+
+segments_intersec_regions <- st_intersection(Cours_eau_projete, regions_cameroun_projete)
+
+# 2. Calcul de la Longueur du Segment (Longueur effective)
+# Chaque nouvelle géométrie représente la longueur exacte du cours d'eau à l'intérieur de la région.
+
+segments_intersec_regions <- segments_intersec_regions %>%
+  mutate(Longueur_Effective_m = as.numeric(st_length(.)))
+
+# 3. Agrégation : Sommer la longueur effective par région
+# NAME_1 est la colonne contenant le nom de la région GADM (Niveau 1).
+repartition_longueur_effective <- segments_intersec_regions %>%
+  st_drop_geometry() %>% 
+  group_by(NAME_1) %>%
+  summarise(
+    Longueur_Totale_m = sum(Longueur_Effective_m, na.rm = TRUE)
+  ) %>%
+  ungroup() %>%
+  # Trier par longueur décroissante et ajouter le format KM pour la lisibilité
+  mutate(
+    Longueur_Totale_km = round(Longueur_Totale_m / 1000, 2),
+    Longueur_Totale_m = round(Longueur_Totale_m, 0)
+  ) %>%
+  arrange(desc(Longueur_Totale_km))
+
+
+# 4. Afficher le résultat final
+cat("--- Longueur Totale Effective des Cours d'eau par Région --- \n")
+print(repartition_longueur_effective)
+cat("\nNote : Ce tableau représente la longueur cumulée qui parcourt strictement chaque région.\n")
+
+
+
+# Représentation graphique
+
+
+# 1. Préparation des données pour le graphique
+# Ordonner les régions selon la longueur totale de cours d'eau (en km)
+repartition_longueur_ordonnee <- repartition_longueur_effective %>%
+  mutate(NAME_1 = reorder(NAME_1, Longueur_Totale_km))
+
+# 2. Création du Diagramme en Barres
+ggplot(repartition_longueur_ordonnee, 
+       aes(x = Longueur_Totale_km, y = NAME_1)) +
+  
+  # Couche des barres
+  geom_bar(stat = "identity", 
+           fill = "darkcyan", 
+           color = "black", 
+           width = 0.8) +
+  
+  # Ajout des étiquettes (longueur en km)
+  geom_text(aes(label = paste(Longueur_Totale_km, "km")), 
+            hjust = -0.1,  # Positionne le texte juste à droite de la barre
+            size = 3.5) +
+  
+  # Configuration des axes et du titre
+  labs(title = "Longueur cumulée de cours d'eau par région au Cameroun",
+       subtitle = "Basé sur la longueur effective parcourue dans chaque région (en km)",
+       x = "Longueur Totale (km)",
+       y = "Région Administrative",
+       caption = "Source : OpenStreetMap (Cours d'eau) & GADM (Limites administratives)") +
+  
+  # Thème et Ajustements finaux
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5, face = "bold"),
+    plot.subtitle = element_text(hjust = 0.5),
+    # Masquer le texte sur l'axe X si les étiquettes des barres sont claires
+    axis.text.x = element_blank(), 
+    axis.title.x = element_text(margin = margin(t = 10)),
+    # Ajoute la source
+    plot.caption = element_text(hjust = 0.5, size = 9, color = "grey50")
+  ) +
+  
+  # Ajuste l'échelle X pour laisser de la place aux étiquettes
+  scale_x_continuous(expand = expansion(mult = c(0.01, 0.15)))
+
+
+# Chemin complet pour l'enregistrement
+output_file_path <- file.path(output_dir, "Longueur_totale_effective_cours_d'eau_par_région.png")
+
+# Enregistrer le graphique
+ggsave(filename = output_file_path,
+       width = 8, 
+       height = 10, 
+       units = "in",
+       dpi = 300)
+
+
+
+# Longueur totale effective des cours d'eau par km^2 par région
+
+# Calculer la superficie de chaque région (en m²) et la convertir en km²
+regions_superficie <- regions_cameroun_projete %>%
+  mutate(
+    Superficie_m2 = as.numeric(st_area(.)), # st_area() donne la superficie en m²
+    Superficie_km2 = round(Superficie_m2 / 1e6, 2) # Convertir m² en km² (1 million de m²)
+  ) %>%
+  st_drop_geometry() %>%
+  select(NAME_1, Superficie_km2)
+
+
+
+# Joindre les deux tableaux par le nom de la région (NAME_1)
+densite_hydrographique <- repartition_longueur_effective %>%
+  inner_join(regions_superficie, by = "NAME_1") %>%
+  
+  # Calculer la densité (en km/km²)
+  mutate(
+    Densite_km_par_km2 = round(Longueur_Totale_km / Superficie_km2, 2)
+  ) %>%
+  
+  # Trier par densité décroissante
+  arrange(desc(Densite_km_par_km2)) %>%
+  
+  # Sélectionner et renommer les colonnes finales
+  select(
+    Région = NAME_1,
+    Superficie_km2,
+    Longueur_Totale_km,
+    Densite_km_par_km2
+  )
+
+# Afficher le résultat
+cat("--- Densité de Drainage (km/km²) par Région ---\n")
+print(densite_hydrographique)
+cat("\nNote: La densité indique le nombre de kilomètres de cours d'eau pour chaque km² de superficie de la région.\n")
+
+
+
+# Représentation graphique
+
+# 1. Préparation des données pour le graphique
+# Ordonner les régions selon la Densité de drainage (km/km²)
+densite_hydrographique_ordonnee <- densite_hydrographique %>%
+  mutate(Région = reorder(Région, Densite_km_par_km2))
+
+# 2. Création du Diagramme en Barres
+ggplot(densite_hydrographique_ordonnee, 
+       aes(x = Densite_km_par_km2, y = Région)) +
+  
+  # Couche des barres
+  geom_bar(stat = "identity", 
+           fill = "steelblue4", 
+           color = "black", 
+           width = 0.8) +
+  
+  # Ajout des étiquettes (densité)
+  geom_text(aes(label = Densite_km_par_km2), 
+            hjust = -0.1,  # Positionne le texte juste à droite de la barre
+            size = 3.5) +
+  
+  # Configuration des axes et du titre
+  labs(title = "Densité de drainage des cours d'eau par région au Cameroun",
+       subtitle = "Densité en kilomètres de cours d'eau par kilomètre carré (km/km²)",
+       x = "Densité de drainage (km/km²)",
+       y = "Région administrative",
+       caption = "Source : OpenStreetMap (Cours d'eau) & GADM (Limites administratives)") +
+  
+  # Thème et Ajustements finaux
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5, face = "bold"),
+    plot.subtitle = element_text(hjust = 0.5),
+    axis.text.x = element_blank(), # Masquer le texte de l'axe X pour une meilleure clarté avec les étiquettes
+    axis.title.x = element_text(margin = margin(t = 10)),
+    # Ajoute la source
+    plot.caption = element_text(hjust = 0.5, size = 9, color = "grey50")
+  ) +
+  
+  # Ajuste l'échelle X pour laisser de la place aux étiquettes
+  scale_x_continuous(expand = expansion(mult = c(0.01, 0.15)))
+
+
+# Chemin complet pour l'enregistrement
+output_file_path <- file.path(output_dir, "Longueur_totale_effective_cours_d'eau_par_km2_par_region.png")
+
+# Enregistrer le graphique
+ggsave(filename = output_file_path,
+       width = 8, 
+       height = 10, 
+       units = "in",
+       dpi = 300)
