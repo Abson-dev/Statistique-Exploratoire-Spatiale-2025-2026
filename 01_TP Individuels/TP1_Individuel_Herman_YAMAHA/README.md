@@ -50,7 +50,7 @@ TP1_Individuel_Herman_YAMAHA/
   - `leaflet` : Cartes interactives
   - `dplyr` : Manipulation de données
 
-## Analyses ééalisées
+## Analyses réalisées
 ### 1. Cartographie statique
 - Visualisation du taux d'incidence pour l'année 2010
 - Production de cartes thématiques avec légende et échelle
@@ -73,7 +73,7 @@ TP1_Individuel_Herman_YAMAHA/
 2. Exécuter les scripts dans l'ordre chronologique
 3. Les résultats seront générés dans le dossier `outputs/`
 
-## Résultats principaux
+### Résultats principaux
 Les analyses ont permis de :
 - Cartographier la distribution spatiale du paludisme au Bénin
 - Identifier les zones à forte endémie
@@ -85,3 +85,4 @@ Les analyses ont permis de :
 - **Données sur le paludisme :** https://data.malariaatlas.org/
 
 ```
+
