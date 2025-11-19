@@ -1,0 +1,4 @@
+NOTE AU LECTEUR: 
+
+Le fichier data initial étant trop lourd pour etre chargé, nous avons zippé les fichiers tiff d’une taille de 19 MO,
+ainsi que les shapefiles d’une taille de 120 MO pour finalement pouvoir ne charger que les fichiers tiff. 
