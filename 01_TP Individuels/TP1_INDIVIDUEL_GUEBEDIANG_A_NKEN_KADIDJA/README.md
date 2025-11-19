@@ -1,16 +1,15 @@
-# 🇪🇹 Cartographie Dynamique des Indicateurs de Santé en Éthiopie
+# 🇪🇹 Cartographie des Indicateurs de Santé en Éthiopie
 
 Application interactive Google Earth Engine pour visualiser les indicateurs de santé maternelle et infantile en Éthiopie (2016).
+Les données de malariaatlas étant indisponible, nous avons travaillé sur cette thématique
 
 ## 🎯 Fonctionnalités
 
 - ✅ Visualisation de 6 indicateurs de santé
 - ✅ Légende dynamique qui s'adapte à chaque indicateur
 - ✅ Indice de vulnérabilité composite
-- ✅ Propriétés détaillées des rasters (résolution, dimensions, nombre de pixels)
 - ✅ Inspecteur de points interactif
 - ✅ Génération d'histogrammes
-- ✅ Mode comparaison côte à côte
 - ✅ Export vers Google Drive
 
 ## 📊 Indicateurs disponibles
@@ -55,9 +54,9 @@ Application interactive Google Earth Engine pour visualiser les indicateurs de s
 
 ### Méthode 2 : Installation via GEE Repository
 
-Si vous avez un compte GEE Team/Pro, vous pouvez partager directement via GEE :
+Si vous avez un compte GEE Team/Pro, vous pouvez accéder au code directement via GEE :
 ```
-https://code.earthengine.google.com/?accept_repo=users/YOUR_USERNAME/ethiopia-health
+[https://code.earthengine.google.com/?accept_repo=users/YOUR_USERNAME/ethiopia-health](https://code.earthengine.google.com/?scriptPath=users%2FKadidja_G_A_NKEN%2Fdebut%3ATP1INDIVIDUEL)
 ```
 
 ## 📁 Structure des données
@@ -100,9 +99,9 @@ Si vous n'avez pas accès aux données originales, vous pouvez utiliser :
 L'indice composite est calculé avec les pondérations suivantes :
 ```javascript
 Vulnérabilité = (Contraception × 0.25) + 
-                (Pauvreté × 0.30) + 
-                (Malnutrition × 0.30) + 
-                (Éducation × 0.15)
+                (Pauvreté × 0.25) + 
+                (Malnutrition × 0.25) + 
+                (Éducation × 0.25)
 ```
 
 ### Palettes de couleurs
@@ -169,17 +168,19 @@ MIT License - voir le fichier [LICENSE](LICENSE) pour plus de détails.
 - [Documentation Google Earth Engine](https://developers.google.com/earth-engine)
 - [Guide des API GEE](https://developers.google.com/earth-engine/guides)
 - [Forum GEE](https://groups.google.com/g/google-earth-engine-developers)
+- [worldpop]()
 
 
 
 ## 🔄 Versions
 
-### v1.0.0 (2024-11-19)
+### v1.0.0 (2025-11-19)
 - ✨ Version initiale
-- ✅ 7 indicateurs de santé
+- ✅ 6 indicateurs de santé
 - ✅ Légendes dynamiques
 - ✅ Propriétés des rasters
 - ✅ Interface interactive complète
 
 ---
+
 
