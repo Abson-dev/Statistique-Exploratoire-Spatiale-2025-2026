@@ -1,0 +1,28 @@
+## 🚀 Installation et utilisation
+
+### Prérequis
+
+- Un compte Google Earth Engine ([S'inscrire ici](https://earthengine.google.com/))
+- Accès à l'éditeur de code GEE ([Code Editor](https://code.earthengine.google.com/))
+- Données uploadées dans votre projet GEE
+
+### Étapes d'installation
+
+
+Résumé rapide :
+
+1. **Cloner ou télécharger ce dépôt**
+2. **Ouvrir Google Earth Engine Code Editor**
+   - Aller sur https://code.earthengine.google.com/
+3. **Copier le script**
+   - Ouvrir `Scripts/application.txt`
+   - Copier tout le contenu
+   - Coller dans l'éditeur GEE
+4. **Modifier les chemins d'assets**
+   - Remplacer `tp1-indiv-visualisation` par votre nom de projet
+5. **Exécuter**
+   - Cliquer sur "Run" ▶️
+   - L'application interactive se charge automatiquement
+
+
+---
