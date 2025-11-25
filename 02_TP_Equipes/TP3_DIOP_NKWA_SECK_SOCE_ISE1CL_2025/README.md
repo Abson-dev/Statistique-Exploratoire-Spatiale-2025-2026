@@ -194,10 +194,12 @@ Population desservie par infrastructure (urbain / rural).
 - Les données ferroviaires sont limitées (une seule classe : rail).
 
 ## 8. Auteur
+```
 Travail réalisé par :
 Joo Young Veridict Gabriel DIOP
 Leslye NKWA TSAMO
 Math SOCE
 Mouhamet SECK
 ENSAE - ISE1 - CL, 2025
+```
 
