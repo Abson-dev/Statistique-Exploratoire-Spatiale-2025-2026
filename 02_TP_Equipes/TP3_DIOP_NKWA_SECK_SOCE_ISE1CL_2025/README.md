@@ -2,7 +2,7 @@
 
 ## 1. Objet du projet
 
-Ce projet constitue le TP3 dans le cadre de notre cours sur les Statistiques Exploratoires Spatiales, réalisé entièrement sur Python.
+Ce projet constitue le TP3 dans le cadre de notre cours de Statistiques Exploratoires Spatiales. Il a été réalisé entièrement avec Python.
 L’objectif est d’intégrer et d’analyser plusieurs sources géospatiales pour produire une vision détaillée du territoire béninois selon :
 
 - les infrastructures sanitaires (hôpitaux, pharmacies),
@@ -200,6 +200,7 @@ Math SOCE
 Mouhamet SECK
 ENSAE - ISE1 - CL, 2025
 ```
+
 
 
 
