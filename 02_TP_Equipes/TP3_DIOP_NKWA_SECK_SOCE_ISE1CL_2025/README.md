@@ -155,12 +155,10 @@ Deux types de visualisations ont été produits :
 ```
 │── data/                   # Données géospatiales (vectorielles et raster)
 │── output/
-│     ├── maps/             # Export des cartes statiques
-│     ├── interactive/      # Cartes Folium
-│     └── tables/           # Résultats intermédiaires
-│── notebooks/
-│     └── TP3_SES.ipynb     # Notebook principal du projet
-│── TP3_SES/                # Fonctions modulaires (buffers, zonal stats…)
+│     ├── .png/             # Export des cartes statiques
+│     ├── .html/            # Cartes Folium
+│     └── .csv/             # Résultats sous format tableaux csv
+│── TP3_SES.ipynb/          # Notebook de travail
 │── README.md               # Documentation du projet
 ```
 
@@ -202,4 +200,5 @@ Math SOCE
 Mouhamet SECK
 ENSAE - ISE1 - CL, 2025
 ```
+
 
