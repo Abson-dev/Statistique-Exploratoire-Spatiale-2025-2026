@@ -22,23 +22,23 @@ L’objectif est d’intégrer et d’analyser plusieurs sources géospatiales p
 ## 2. Données utilisées
 ### 2.1 Données géographiques (vecteur)
 
-- Sources principales :
+Sources principales :
 
-geoBoundaries : limites administratives du Bénin (pays, départements).
+- geoBoundaries : limites administratives du Bénin (pays, départements).
 
-OpenStreetMap (OSM) :
+- OpenStreetMap (OSM) :
 
-hôpitaux
+- hôpitaux
 
-pharmacies
+- pharmacies
 
-localités (village, town, hamlet…)
+- localités (village, town, hamlet…)
 
-réseau routier
+- réseau routier
 
-réseau ferroviaire
+- réseau ferroviaire
 
-aires protégées
+- aires protégées
 
 ### 2.2 Données populationnelles (raster)
 
@@ -200,6 +200,7 @@ Math SOCE
 Mouhamet SECK
 ENSAE - ISE1 - CL, 2025
 ```
+
 
 
 
