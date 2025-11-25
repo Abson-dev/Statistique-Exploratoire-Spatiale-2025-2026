@@ -1,17 +1,15 @@
-# 📘 TP3 – Analyse Spatiale de la Population et de l’Accessibilité aux Services Sociaux de Base au Tchad
+# TP3 – Analyse Spatiale de la Population et de l'Accessibilité aux Services Sociaux de Base au Tchad
 
-## Description du ProjetS
-Ce TP3 constitue la suite directe du TP2, en intégrant cette fois 
-les données démographiques issues de WorldPop afin d’évaluer la distribution 
-spatiale de la population et son accessibilité aux services sociaux de base au Tchad.
+## Description du Projet
+Ce TP3 constitue la suite directe du TP2, en intégrant cette fois les données démographiques issues de WorldPop afin d'évaluer la distribution spatiale de la population et son accessibilité aux services sociaux de base au Tchad.
 
 ## Équipe
-- **David NGUEAJIO**
-- **Cheikh Mouhamadou Moustapha NDIAYE **
-- **Mamadou Lamine DIABANG **
-- **Cheikh Ahmadou Bamba FALL **
+- David NGUEAJIO
+- Cheikh Mouhamadou Moustapha NDIAYE
+- Mamadou Lamine DIABANG
+- Cheikh Ahmadou Bamba FALL
 
-**Classe :** ISE1 CL
+**Classe :** ISE1 CL  
 **Année académique :** 2025-2026
 
 ## Structure du Projet
@@ -108,54 +106,63 @@ TP1_DAVID_MOUSTAPHA_LAMINE_BAMBA_ISE1_CL_2025_2026/
 
 ```
 
-# Données Utilisées
-Données Raster
-WorldPop (2025) – Population
-Résolution 100 m × 100 m
-Résolution 1 km × 1 km
-Valeurs : nombre de personnes par pixel
-#Données Vectorielles
-OSM : cliniques, hôpitaux, écoles, lieux de culte, routes, bâtiments…
-GADM : niveaux administratifs 0, 1, 2, 3 du Tchad
-WDPA : aires protégées (parcs, réserves)
+## Données Utilisées
+
+### Données Raster
+**WorldPop (2025) – Population**
+- Résolution 100 m × 100 m
+- Résolution 1 km × 1 km
+- Valeurs : nombre de personnes par pixel
+
+### Données Vectorielles
+- **OSM** : cliniques, hôpitaux, écoles, lieux de culte, routes, bâtiments…
+- **GADM** : niveaux administratifs 0, 1, 2, 3 du Tchad
+- **WDPA** : aires protégées (parcs, réserves)
 
 ## Technologies et Outils
-#Technologies et Outils
-📌 Google Earth Engine (API Python)
-📌 Libraries Python :
-earthengine-api
-geemap
-folium
-pandas
-numpy
-geopandas (local)
-📌 Visualisation en HTML interactive
-📌 Export des résultats en Excel et CSV
-## Taches Réalisées
-# Cartographie de la population
-Raster 100 m × 100 m : densité très fine
-Raster 1 km × 1 km : vue globale
-Visualisation dans GEE avec palette de couleurs
-Export en cartes HTML interactives
-# Calcul des buffers autour des services
-Service	Distances utilisées
-Cliniques & Hôpitaux	1 km, 5 km, 10 km
-Écoles	1 km, 5 km, 10 km
-Lieux de culte	1 km, 5 km, 10 km
+
+- Google Earth Engine (API Python)
+- Librairies Python :
+  - earthengine-api
+  - geemap
+  - folium
+  - pandas
+  - numpy
+  - geopandas (local)
+- Visualisation en HTML interactive
+- Export des résultats en Excel et CSV
+
+## Tâches Réalisées
+
+### Cartographie de la population
+- Raster 100 m × 100 m : densité très fine
+- Raster 1 km × 1 km : vue globale
+- Visualisation dans GEE avec palette de couleurs
+- Export en cartes HTML interactives
+
+### Calcul des buffers autour des services
+
+| Service | Distances utilisées |
+|---------|---------------------|
+| Cliniques & Hôpitaux | 1 km, 5 km, 10 km |
+| Écoles | 1 km, 5 km, 10 km |
+| Lieux de culte | 1 km, 5 km, 10 km |
+
 Chaque buffer a servi à calculer la population totale dans la zone (population desservie)
-# Population à l’intérieur des aires protégées (WDPA)
-Extraction des aires protégées
-Intersection raster population × polygones WDPA
-Calcul du nombre de personnes dans chaque aire protégée
-Export des tableaux en Excel et CSV
+
+### Population à l'intérieur des aires protégées (WDPA)
+- Extraction des aires protégées
+- Intersection raster population × polygones WDPA
+- Calcul du nombre de personnes dans chaque aire protégée
+- Export des tableaux en Excel et CSV
+
 ## Références
-WorldPop : [https://www.worldpop.org/datacatalog/](https://www.worldpop.org/datacatalog/)
-*GADM* : [https://gadm.org/](https://gadm.org/)
-*OSM* : [https://download.geofabrik.de/](https://download.geofabrik.de/)
-*WDPA* : [https://www.protectedplanet.net/](https://www.protectedplanet.net/)
-*Google Earth Engine* : [https://earthengine.google.com/](https://earthengine.google.com/)
+
+- **WorldPop** : https://www.worldpop.org/datacatalog/
+- **GADM** : https://gadm.org/
+- **OSM** : https://download.geofabrik.de/
+- **WDPA** : https://www.protectedplanet.net/
+- **Google Earth Engine** : https://earthengine.google.com/
 
 ## Licence
 Projet académique.
-```
-
