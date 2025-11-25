@@ -1,5 +1,4 @@
-# 📘 TP3 – Analyse Spatiale de la Population et de l’Accessibilité 
-#aux Services Sociaux de Base au Tchad
+# 📘 TP3 – Analyse Spatiale de la Population et de l’Accessibilité aux Services Sociaux de Base au Tchad
 
 ## Description du ProjetS
 Ce TP3 constitue la suite directe du TP2, en intégrant cette fois 
@@ -159,3 +158,4 @@ WorldPop : [https://www.worldpop.org/datacatalog/](https://www.worldpop.org/data
 ## Licence
 Projet académique.
 ```
+
