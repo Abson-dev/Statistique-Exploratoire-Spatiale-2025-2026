@@ -185,7 +185,7 @@ Ces exports garantissent :
 
   Le script complet et la carte interactive sont disponibles sur Google Earth Engine.
   
-  Lien : **https://code.earthengine.google.com/d89307bf8d9a5c7375fa12f298bdc2df**
+  Lien : **https://code.earthengine.google.com/081600ada1416d62192bd315ed09efa0**
   
   Le professeur encadrant est déjà ajouté comme éditeur au projet via son adresse e-mail.
 
