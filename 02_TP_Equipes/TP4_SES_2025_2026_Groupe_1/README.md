@@ -192,10 +192,10 @@ Ces exports garantissent :
 ---
   
   ## 6. Références
-  - **GADM :** https://gadm.org/
-  - **GFSAD 30 m :** Global Food Security-support Analysis Data
+- **GADM :** https://gadm.org/
+- **GFSAD 30 m :** [Global Food Security-support Analysis Data](https://search.earthdata.nasa.gov/search)
 - **Hansen Global Forest Change :** https://earthenginepartners.appspot.com/science-2013-global-forest
 - **JRC Global Surface Water :** https://global-surface-water.appspot.com/
-  - **GMIS :** Global Man-made Impervious Surface Dataset
+- **GMIS :** https://data.nasa.gov/dataset/global-man-made-impervious-surface-gmis-dataset-from-landsat
 - **WDPA :** https://www.protectedplanet.net/
-  - **Google Earth Engine :** https://earthengine.google.com/
+- **Google Earth Engine :** https://earthengine.google.com/
