@@ -1,0 +1,79 @@
+# ==============================================================================
+# FICHIER PRINCIPAL DU PROJET R
+# ==============================================================================
+
+# --- 1. Installation et Chargement des Librairies ---
+packages <- c("sf", "ggplot2", "tmap", "rnaturalearth", "rnaturalearthdata", 
+              "dplyr", "tidyr", "shiny", "leaflet", "webshot", "mapview", "units", "nngeo",
+              "osmdata", "osmextract", "ggspatial", "here", "plotly", "htmlwidgets",
+              "viridis", "RColorBrewer", "leaflet.extras", "httr", "jsonlite", "data.table", "terra")
+
+install_and_load <- function(pkg){
+  if (!requireNamespace(pkg, quietly = TRUE)) {
+    install.packages(pkg, dependencies = TRUE)
+  }
+  library(pkg, character.only = TRUE)
+}
+
+cat("Chargement des librairies...\n")
+sapply(packages, install_and_load)
+
+# --- 2. Définition des Chemins ---
+base_path <- "C:/Users/DELL/Desktop/TP2_SES_2025_2026_ASTOU_MAREME_LANDRY_YAMAHA/TP2_SES_2025_2026_ASTOU_MAREME_LANDRY_YAMAHA"
+output_dir <- file.path(base_path, "outputs")
+scripts_dir <- file.path(base_path, "scripts")
+data_dir <- file.path(base_path, "data")
+
+if (!dir.exists(output_dir)) dir.create(output_dir, recursive = TRUE)
+
+# --- 3. Exécution des Scripts ---
+cat("\nDébut de l'exécution séquentielle des scripts...\n")
+
+scripts <- c(
+  "Visualisation_Aires protégées.R",
+  "Visualisation_Cours d'eau.R", 
+  "Visualisation_Fleuves et rivières.R",
+  "Visualisation_Grandes villes.R",
+  "Visualisation_Hôpitaux.R",
+  "script1.R",
+  "script2.R"
+)
+
+for(script in scripts) {
+  cat("  -> Exécution du script :", script, "...\n")
+  source(file.path(scripts_dir, script), encoding = "UTF-8", echo = FALSE) 
+  cat("  -> Fin de l'exécution de :", script, "\n")
+}
+
+# --- 4. Tableau de Bord Interactif ---
+cat("\n EXÉCUTION DU TABLEAU DE BORD INTERACTIF...\n")
+cat(" IMPORTANT : Lorsque la boîte de dialogue s'ouvre, sélectionnez le dossier 'data' contenant vos fichiers OSM (.shp)\n")
+cat("   Ce dossier doit contenir les fichiers : gis_osm_places_free_1.shp, gis_osm_pois_free_1.shp, etc.\n")
+cat("   Appuyez sur OK pour continuer...\n")
+
+# Pause pour laisser lire le message
+readline(prompt = "Appuyez sur Entrée pour continuer...")
+
+cat("  -> Exécution du script : tableau de bord.R ...\n")
+source(file.path(scripts_dir, "tableau de bord.R"), encoding = "UTF-8", echo = FALSE) 
+cat("  -> Fin de l'exécution de : tableau de bord.R\n")
+
+# --- 5. Vérification finale ---
+cat("\n" , strrep("=", 60), "\n")
+cat("✅ TOUS LES SCRIPTS ONT ÉTÉ EXÉCUTÉS\n")
+cat(strrep("=", 60), "\n")
+
+# Vérifier les fichiers générés
+fichiers_sortie <- list.files(output_dir, pattern = "\\.html$|\\.csv$|\\.png$", full.names = FALSE)
+if (length(fichiers_sortie) > 0) {
+  cat("📁 FICHIERS GÉNÉRÉS DANS", output_dir, ":\n")
+  for(fichier in fichiers_sortie) {
+    taille <- file.size(file.path(output_dir, fichier))
+    cat("   •", fichier, "(", round(taille/1024, 1), "KB )\n")
+  }
+} else {
+  cat("❌ Aucun fichier de sortie trouvé\n")
+}
+
+cat("\n🎉 PROJET TERMINÉ AVEC SUCCÈS!\n")
+cat("📍 Accédez à vos résultats dans le dossier:", output_dir, "\n")

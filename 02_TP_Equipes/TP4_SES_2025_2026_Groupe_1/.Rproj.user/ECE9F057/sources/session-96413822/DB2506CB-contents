@@ -1,0 +1,1762 @@
+library(shiny)
+library(tmap)
+library(sf)
+library(terra)
+library(dplyr)
+library(tidyr)
+library(viridis)
+
+# ====================================================================
+# CONFIGURATION ET CHARGEMENT DES DONNÉES STATIQUES
+# ====================================================================
+
+base_path <- getwd()
+output_dir <- file.path(base_path, "outputs")
+
+# Création du dossier de sortie
+if (!dir.exists(output_dir)) {
+  dir.create(output_dir, recursive = TRUE)
+  cat("Dossier de sortie créé :", output_dir, "\n")
+}
+
+# --- Importation des données ---
+tryCatch({
+  # Hôpitaux
+  HPT_shp <- file.path(base_path, "data/data2/202303-osm2igeo-cameroun-shp-wgs84-4326/202303_OSM2IGEO_CAMEROUN_SHP_WGS84_4326/I_OSM_ZONE_ACTIVITE/PAI_SANTE.shp")
+  hopital <- st_read(HPT_shp, quiet = TRUE)
+  
+  # Limites administratives
+  CMR_shp_3 <- file.path(base_path, "data/data2/shapefiles_limites_administratives_GADM_Cameroun/gadm41_CMR_3.shp")
+  cameroun_limite_3 <- st_read(CMR_shp_3, quiet = TRUE)
+  
+  # Localités
+  place_shp <- file.path(base_path, "data/data2/cameroon-251116-free.shp/gis_osm_places_free_1.shp")
+  place <- st_read(place_shp, quiet = TRUE)
+  fclass_display <- c("city", "town", "village", "hamlet", "suburb", "locality")
+  place <- place %>% filter(fclass %in% fclass_display)
+  
+  # Population
+  raster_file_path <- file.path(base_path, "data/data2/worldpop/cmr_pop_2025_CN_100m_R2024B_v1.tif")
+  worldpop <- rast(raster_file_path)
+  
+  cat("Toutes les données ont été chargées avec succès.\n")
+  
+}, error = function(e) {
+  stop("Erreur lors du chargement des données : ", e$message)
+})
+
+# --- Projection vers CRS métrique ---
+CRS_METRIQUE_EPSG <- "EPSG:32633"
+
+regions_dep_arr_projete <- st_transform(cameroun_limite_3, crs = CRS_METRIQUE_EPSG)
+hopital_projete <- st_transform(hopital, crs = CRS_METRIQUE_EPSG)
+place_projete <- st_transform(place, crs = CRS_METRIQUE_EPSG)
+
+cat("Projection du raster WorldPop...\n")
+worldpop_projete <- project(worldpop, CRS_METRIQUE_EPSG)
+cat("Projection terminée.\n")
+
+# --- Enrichissement des données ---
+
+# 1. Nombre d'hôpitaux par région
+hopitaux_par_region <- st_join(
+  hopital_projete,
+  regions_dep_arr_projete,
+  join = st_intersects,
+  left = FALSE
+) %>%
+  st_drop_geometry() %>%
+  group_by(NAME_1) %>%
+  tally(name = "Nb_Hopitaux") %>%
+  ungroup()
+
+# 2. Régions avec statistiques
+regions_interactives <- regions_dep_arr_projete %>%
+  group_by(NAME_1) %>%
+  summarise(geometry = st_union(geometry)) %>%
+  ungroup() %>%
+  left_join(hopitaux_par_region, by = "NAME_1") %>%
+  mutate(Nb_Hopitaux = replace_na(Nb_Hopitaux, 0)) %>%
+  rename(
+    Région = NAME_1,
+    `Nombre d'hôpitaux dans la région` = Nb_Hopitaux
+  ) %>%
+  select(Région, `Nombre d'hôpitaux dans la région`) %>%
+  mutate(region_id = as.character(seq_len(nrow(.))))
+
+# 3. Hôpitaux enrichis
+hopital_projete_enriched <- hopital_projete %>%
+  mutate(hopital_id = as.character(seq_len(nrow(.)))) %>%
+  st_join(
+    regions_dep_arr_projete %>% select(NAME_1, NAME_2, NAME_3),
+    join = st_intersects,
+    left = TRUE
+  ) %>%
+  left_join(hopitaux_par_region, by = "NAME_1") %>%
+  rename(
+    Nom_Hopital = NOM,
+    Région = NAME_1,
+    Département = NAME_2,
+    Arrondissement = NAME_3,
+    `Nombre d'hôpitaux dans la région` = Nb_Hopitaux
+  ) %>%
+  mutate(
+    popup_fix = "",
+    `Nombre d'hôpitaux dans la région` = replace_na(`Nombre d'hôpitaux dans la région`, 0)
+  ) %>%
+  select(hopital_id, popup_fix, Nom_Hopital, Arrondissement, 
+         Département, Région, `Nombre d'hôpitaux dans la région`)
+
+# 4. Localités avec distance au plus proche hôpital
+place_projete_enriched <- place_projete %>%
+  mutate(place_id = as.character(seq_len(nrow(.)))) %>%
+  mutate(
+    nearest_hopital_index = st_nearest_feature(., hopital_projete),
+    nearest_hopital_name = hopital_projete$NOM[nearest_hopital_index],
+    distance_to_nearest_hopital_m = st_distance(
+      ., 
+      hopital_projete[nearest_hopital_index, ], 
+      by_element = TRUE
+    ),
+    `Distance (km)` = round(as.numeric(distance_to_nearest_hopital_m) / 1000, 2)
+  ) %>%
+  rename(
+    `Type de localité` = fclass,
+    Nom = name,
+    `Hôpital le plus proche` = nearest_hopital_name
+  ) %>%
+  select(place_id, Nom, `Type de localité`, `Hôpital le plus proche`, `Distance (km)`)
+
+# ====================================================================
+# INTERFACE UTILISATEUR
+# ====================================================================
+
+ui <- fluidPage(
+  titlePanel("Carte interactive de couverture sanitaire du Cameroun"),
+  
+  sidebarLayout(
+    sidebarPanel(
+      width = 3,
+      
+      sliderInput("buffer_dist", 
+                  "Distance de tampon (km) :",
+                  min = 0, max = 100, value = 5, step = 1),
+      hr(),
+      
+      checkboxGroupInput("fclass_select",
+                         "Afficher les localités de type :",
+                         choices = fclass_display,
+                         selected = c("city", "town", "village")),
+      hr(),
+      
+      tags$h4(tags$b("Analyse d'Accessibilité")),
+      tags$p("Cliquez sur un hôpital (point rouge)", style = "font-style: italic; color: #666;"),
+      verbatimTextOutput("hospital_analysis"),
+      hr(),
+      
+      tags$h4(tags$b("Proximité Sanitaire")),
+      tags$p("Cliquez sur une localité (point bleu)", style = "font-style: italic; color: #666;"),
+      verbatimTextOutput("place_analysis"),
+      
+      tags$hr(),
+      tags$p("Source : OSM, GADM, WorldPop", 
+             style = "font-size: 10px; color: grey; margin-top: 20px;")
+    ),
+    
+    mainPanel(
+      width = 9,
+      tmapOutput("interactive_map", height = "800px")
+    )
+  )
+)
+
+# ====================================================================
+# LOGIQUE SERVEUR
+# ====================================================================
+
+server <- function(input, output, session) {
+  
+  tmap_mode("view")
+  
+  # Valeurs réactives
+  rv_analysis <- reactiveValues(
+    hospital_data = "Cliquez sur un hôpital (point rouge) pour analyser le tampon.",
+    place_data = "Cliquez sur une localité (point bleu) pour trouver l'hôpital le plus proche.",
+    clicked_hospital_id = NULL,
+    clicked_place_id = NULL
+  )
+  
+  # Calcul réactif du tampon
+  buffer_a_afficher <- reactive({
+    req(input$buffer_dist)
+    dist_m <- input$buffer_dist * 1000
+    
+    if (dist_m > 0) {
+      return(st_buffer(hopital_projete, dist = dist_m))
+    } else {
+      return(st_sfc(st_polygon(), crs = CRS_METRIQUE_EPSG))
+    }
+  })
+  
+  # Gestion des clics sur la carte
+  observeEvent(input$interactive_map_shape_click, {
+    click_data <- input$interactive_map_shape_click
+    
+    if (!is.null(click_data$group)) {
+      if (click_data$group == "Hôpitaux Localisation") {
+        rv_analysis$clicked_hospital_id <- click_data$id
+        rv_analysis$clicked_place_id <- NULL
+      } else if (click_data$group == "Localités") {
+        rv_analysis$clicked_place_id <- click_data$id
+        rv_analysis$clicked_hospital_id <- NULL
+      }
+    }
+  })
+  
+  # Analyse du clic sur un hôpital
+  observeEvent(rv_analysis$clicked_hospital_id, {
+    hospital_id_clicked <- rv_analysis$clicked_hospital_id
+    
+    if (is.null(hospital_id_clicked) || hospital_id_clicked == "") return()
+    
+    clicked_hopital <- hopital_projete_enriched %>%
+      filter(hopital_id == hospital_id_clicked)
+    
+    if (nrow(clicked_hopital) == 0) return()
+    
+    dist_m <- input$buffer_dist * 1000
+    
+    if (dist_m > 0) {
+      buffer_clicked <- st_buffer(clicked_hopital, dist = dist_m)
+      
+      # Extraction de la population
+      total_pop_in_buffer <- tryCatch({
+        population_values <- extract(worldpop_projete, buffer_clicked, 
+                                     fun = sum, na.rm = TRUE)
+        
+        if (!is.null(population_values) && ncol(population_values) >= 2) {
+          pop <- population_values[[2]][1]
+          if (is.na(pop)) 0 else pop
+        } else {
+          0
+        }
+      }, error = function(e) {
+        cat("Erreur extraction population:", e$message, "\n")
+        0
+      })
+      
+      # Comptage des localités
+      localities_in_buffer <- st_filter(place_projete, buffer_clicked, 
+                                        .predicate = st_intersects)
+      
+      locality_counts <- localities_in_buffer %>%
+        st_drop_geometry() %>%
+        group_by(fclass) %>%
+        tally(name = "Count") %>%
+        arrange(desc(Count))
+      
+      locality_text <- if (nrow(locality_counts) > 0) {
+        paste(locality_counts$fclass, ":", locality_counts$Count, collapse = "\n")
+      } else {
+        "Aucune localité trouvée dans le tampon."
+      }
+      
+      rv_analysis$hospital_data <- paste(
+        "Hôpital cliqué :", clicked_hopital$Nom_Hopital, "\n",
+        "Distance de Tampon :", input$buffer_dist, "km\n",
+        "--------------------------------------\n",
+        "Population estimée dans le tampon :\n",
+        format(round(total_pop_in_buffer), big.mark = " ", scientific = FALSE), "\n",
+        "--------------------------------------\n",
+        "Localités incluses dans le tampon (par type) :\n",
+        locality_text
+      )
+    } else {
+      rv_analysis$hospital_data <- paste(
+        "Hôpital cliqué :", clicked_hopital$Nom_Hopital, "\n",
+        "Distance de Tampon : 0 km\n",
+        "--------------------------------------\n",
+        "Augmentez la distance du tampon pour effectuer l'analyse."
+      )
+    }
+  })
+  
+  # Analyse du clic sur une localité
+  observeEvent(rv_analysis$clicked_place_id, {
+    place_id_clicked <- rv_analysis$clicked_place_id
+    
+    if (is.null(place_id_clicked) || place_id_clicked == "") return()
+    
+    clicked_place <- place_projete_enriched %>%
+      filter(place_id == place_id_clicked)
+    
+    if (nrow(clicked_place) > 0) {
+      rv_analysis$place_data <- paste(
+        "Localité cliquée :", clicked_place$Nom, "\n",
+        "Type :", clicked_place$`Type de localité`, "\n",
+        "--------------------------------------\n",
+        "Hôpital le plus proche :", clicked_place$`Hôpital le plus proche`, "\n",
+        "Distance :", clicked_place$`Distance (km)`, "km"
+      )
+    }
+  })
+  
+  # Sorties textuelles
+  output$hospital_analysis <- renderPrint({
+    cat(rv_analysis$hospital_data)
+  })
+  
+  output$place_analysis <- renderPrint({
+    cat(rv_analysis$place_data)
+  })
+  
+  # Rendu de la carte
+  output$interactive_map <- renderTmap({
+    tampon_a_afficher <- buffer_a_afficher()
+    
+    localites_filtrees <- place_projete_enriched %>%
+      filter(`Type de localité` %in% input$fclass_select)
+    
+    fclass_levels <- unique(localites_filtrees$`Type de localité`)
+    dot_palette <- if (length(fclass_levels) > 0) {
+      setNames(viridis(length(fclass_levels), option = "C"), fclass_levels)
+    } else {
+      c("default" = "blue")
+    }
+    
+    tm_basemap(server = "OpenStreetMap") +
+      
+      # Régions administratives
+      tm_shape(regions_interactives, name = "Régions administratives",
+               id = "region_id", popup.vars = TRUE) +
+      tm_borders(col = "grey10", lwd = 2, alpha = 0.05) +
+      tm_fill(col = NA, alpha = 0) +
+      
+      # Zone d'accès (tampon)
+      tm_shape(tampon_a_afficher, 
+               name = paste0("Zone d'Accès (", input$buffer_dist, " km)")) +
+      tm_fill(col = "lightcoral", alpha = 0.4) +
+      tm_borders(col = "darkred", lwd = 0.5, alpha = 0.6) +
+      
+      # Localités
+      tm_shape(localites_filtrees, name = "Localités") +
+      tm_dots(
+        col = "Type de localité",
+        id = "place_id",
+        palette = dot_palette,
+        shape = 16,
+        size = 0.1,
+        popup.vars = c(
+          "Nom de la Localité" = "Nom",
+          "Type" = "Type de localité",
+          "Hôpital le plus proche" = "Hôpital le plus proche",
+          "Distance (km)" = "Distance (km)"
+        )
+      ) +
+      
+      # Hôpitaux
+      tm_shape(hopital_projete_enriched, name = "Hôpitaux Localisation") +
+      tm_dots(
+        col = "darkred",
+        id = "hopital_id",
+        shape = 10,
+        size = 0.15,
+        popup.vars = c(
+          " " = "popup_fix",
+          "Nom de l'Hôpital" = "Nom_Hopital",
+          "Arrondissement" = "Arrondissement",
+          "Département" = "Département",
+          "Région" = "Région",
+          "Nb d'hôpitaux dans la région" = "Nombre d'hôpitaux dans la région"
+        )
+      ) +
+      
+      # Mise en page
+      tm_layout(
+        title = "Répartition des hôpitaux au Cameroun",
+        title.position = c("center", "top"),
+        title.size = 1.2,
+        legend.outside = TRUE,
+        legend.text.size = 0.8,
+        frame = FALSE
+      )
+  })
+}
+
+# ====================================================================
+# LANCEMENT DE L'APPLICATION
+# ====================================================================
+
+shinyApp(ui = ui, server = server)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+library(shiny)
+library(leaflet)
+library(sf)
+library(terra)
+library(dplyr)
+library(tidyr)
+library(viridis)
+
+# ====================================================================
+# CONFIGURATION ET CHARGEMENT DES DONNÉES STATIQUES
+# ====================================================================
+
+base_path <- getwd()
+output_dir <- file.path(base_path, "outputs")
+
+# Création du dossier de sortie
+if (!dir.exists(output_dir)) {
+  dir.create(output_dir, recursive = TRUE)
+  cat("Dossier de sortie créé :", output_dir, "\n")
+}
+
+# --- Importation des données ---
+tryCatch({
+  # Hôpitaux
+  HPT_shp <- file.path(base_path, "data/data2/202303-osm2igeo-cameroun-shp-wgs84-4326/202303_OSM2IGEO_CAMEROUN_SHP_WGS84_4326/I_OSM_ZONE_ACTIVITE/PAI_SANTE.shp")
+  hopital <- st_read(HPT_shp, quiet = TRUE)
+  
+  # Limites administratives
+  CMR_shp_3 <- file.path(base_path, "data/data2/shapefiles_limites_administratives_GADM_Cameroun/gadm41_CMR_3.shp")
+  cameroun_limite_3 <- st_read(CMR_shp_3, quiet = TRUE)
+  
+  # Localités
+  place_shp <- file.path(base_path, "data/data2/cameroon-251116-free.shp/gis_osm_places_free_1.shp")
+  place <- st_read(place_shp, quiet = TRUE)
+  fclass_display <- c("city", "town", "village", "hamlet", "suburb", "locality")
+  place <- place %>% filter(fclass %in% fclass_display)
+  
+  # Population
+  raster_file_path <- file.path(base_path, "data/data2/worldpop/cmr_pop_2025_CN_100m_R2024B_v1.tif")
+  worldpop <- rast(raster_file_path)
+  
+  cat("Toutes les données ont été chargées avec succès.\n")
+  
+}, error = function(e) {
+  stop("Erreur lors du chargement des données : ", e$message)
+})
+
+# --- Projection vers CRS métrique pour les calculs ---
+CRS_METRIQUE_EPSG <- "EPSG:32633"
+
+regions_dep_arr_projete <- st_transform(cameroun_limite_3, crs = CRS_METRIQUE_EPSG)
+hopital_projete <- st_transform(hopital, crs = CRS_METRIQUE_EPSG)
+place_projete <- st_transform(place, crs = CRS_METRIQUE_EPSG)
+
+cat("Projection du raster WorldPop...\n")
+worldpop_projete <- project(worldpop, CRS_METRIQUE_EPSG)
+cat("Projection terminée.\n")
+
+# --- Enrichissement des données ---
+
+# 1. Nombre d'hôpitaux par région
+hopitaux_par_region <- st_join(
+  hopital_projete,
+  regions_dep_arr_projete,
+  join = st_intersects,
+  left = FALSE
+) %>%
+  st_drop_geometry() %>%
+  group_by(NAME_1) %>%
+  tally(name = "Nb_Hopitaux") %>%
+  ungroup()
+
+# 2. Population par région
+population_par_region <- tryCatch({
+  regions_union <- regions_dep_arr_projete %>%
+    group_by(NAME_1) %>%
+    summarise(geometry = st_union(geometry)) %>%
+    ungroup()
+  
+  # Extraire les valeurs de population pour chaque région
+  pop_extract <- extract(worldpop_projete, regions_union, fun = sum, na.rm = TRUE)
+  
+  regions_union %>%
+    mutate(Population = ifelse(!is.na(pop_extract[[2]]), pop_extract[[2]], 0)) %>%
+    st_drop_geometry() %>%
+    select(NAME_1, Population)
+}, error = function(e) {
+  cat("Erreur calcul population par région:", e$message, "\n")
+  # Retourner des données par défaut
+  regions_dep_arr_projete %>%
+    st_drop_geometry() %>%
+    group_by(NAME_1) %>%
+    summarise(Population = 0) %>%
+    ungroup()
+})
+
+# 3. Régions avec statistiques complètes
+regions_interactives <- regions_dep_arr_projete %>%
+  group_by(NAME_1) %>%
+  summarise(geometry = st_union(geometry)) %>%
+  ungroup() %>%
+  left_join(hopitaux_par_region, by = "NAME_1") %>%
+  left_join(population_par_region, by = "NAME_1") %>%
+  mutate(
+    Nb_Hopitaux = replace_na(Nb_Hopitaux, 0),
+    Population = replace_na(Population, 0)
+  ) %>%
+  rename(
+    Région = NAME_1,
+    `Nombre d'hôpitaux dans la région` = Nb_Hopitaux,
+    `Population de la région` = Population
+  ) %>%
+  select(Région, `Nombre d'hôpitaux dans la région`, `Population de la région`)
+
+# 4. Hôpitaux enrichis
+hopital_projete_enriched <- hopital_projete %>%
+  mutate(hopital_id = as.character(seq_len(nrow(.)))) %>%
+  st_join(
+    regions_dep_arr_projete %>% select(NAME_1, NAME_2, NAME_3),
+    join = st_intersects,
+    left = TRUE
+  ) %>%
+  left_join(hopitaux_par_region, by = "NAME_1") %>%
+  left_join(population_par_region, by = "NAME_1") %>%
+  rename(
+    Nom_Hopital = NOM,
+    Région = NAME_1,
+    Département = NAME_2,
+    Arrondissement = NAME_3,
+    `Nombre d'hôpitaux dans la région` = Nb_Hopitaux,
+    `Population de la région` = Population
+  ) %>%
+  mutate(
+    `Nombre d'hôpitaux dans la région` = replace_na(`Nombre d'hôpitaux dans la région`, 0),
+    `Population de la région` = replace_na(`Population de la région`, 0)
+  ) %>%
+  select(hopital_id, Nom_Hopital, Arrondissement, 
+         Département, Région, `Nombre d'hôpitaux dans la région`, `Population de la région`)
+
+# 5. Localités avec distance au plus proche hôpital
+place_projete_enriched <- place_projete %>%
+  mutate(place_id = as.character(seq_len(nrow(.)))) %>%
+  mutate(
+    nearest_hopital_index = st_nearest_feature(., hopital_projete),
+    nearest_hopital_name = hopital_projete$NOM[nearest_hopital_index],
+    distance_to_nearest_hopital_m = st_distance(
+      ., 
+      hopital_projete[nearest_hopital_index, ], 
+      by_element = TRUE
+    ),
+    `Distance (km)` = round(as.numeric(distance_to_nearest_hopital_m) / 1000, 2)
+  ) %>%
+  rename(
+    `Type de localité` = fclass,
+    Nom = name,
+    `Hôpital le plus proche` = nearest_hopital_name
+  ) %>%
+  select(place_id, Nom, `Type de localité`, `Hôpital le plus proche`, `Distance (km)`)
+
+# Conversion en WGS84 pour leaflet
+regions_wgs84 <- st_transform(regions_interactives, 4326)
+hopitaux_wgs84 <- st_transform(hopital_projete_enriched, 4326)
+localites_wgs84 <- st_transform(place_projete_enriched, 4326)
+
+# Debug: Vérifier les données
+cat("=== DEBUG INFORMATION ===\n")
+cat("Nombre d'hôpitaux:", nrow(hopitaux_wgs84), "\n")
+cat("Nombre de localités:", nrow(localites_wgs84), "\n")
+cat("Nombre de régions:", nrow(regions_wgs84), "\n")
+cat("Population totale estimée:", sum(population_par_region$Population, na.rm = TRUE), "\n")
+cat("=======================\n")
+
+# ====================================================================
+# INTERFACE UTILISATEUR
+# ====================================================================
+
+ui <- fluidPage(
+  tags$head(
+    tags$style(HTML("
+      .sidebar-panel { 
+        background-color: #f8f9fa; 
+        padding: 15px;
+        border-radius: 5px;
+        height: 800px;
+        overflow-y: auto;
+      }
+      .main-panel { 
+        padding-left: 20px;
+      }
+      .analysis-output {
+        background-color: white;
+        border: 1px solid #dee2e6;
+        border-radius: 5px;
+        padding: 10px;
+        margin-bottom: 10px;
+        font-family: 'Courier New', monospace;
+        font-size: 12px;
+        white-space: pre-wrap;
+        max-height: 200px;
+        overflow-y: auto;
+      }
+    "))
+  ),
+  
+  titlePanel("🏥 Carte Interactive de Couverture Sanitaire du Cameroun"),
+  
+  sidebarLayout(
+    sidebarPanel(
+      width = 3,
+      class = "sidebar-panel",
+      
+      h4("🎯 Paramètres d'Analyse"),
+      sliderInput("buffer_dist", 
+                  "Distance de tampon (km) :",
+                  min = 0, max = 100, value = 10, step = 5),
+      hr(),
+      
+      h4("🏘️ Filtrage des Localités"),
+      checkboxGroupInput("fclass_select",
+                         "Afficher les localités de type :",
+                         choices = fclass_display,
+                         selected = c("city", "town", "village")),
+      hr(),
+      
+      h4("📊 Analyse d'Accessibilité"),
+      tags$p("Cliquez sur un hôpital (point rouge) pour analyser le tampon", 
+             style = "font-style: italic; color: #666; font-size: 12px;"),
+      div(class = "analysis-output",
+          verbatimTextOutput("hospital_analysis")
+      ),
+      
+      h4("📍 Proximité Sanitaire"),
+      tags$p("Cliquez sur une localité (point coloré) pour trouver l'hôpital le plus proche", 
+             style = "font-style: italic; color: #666; font-size: 12px;"),
+      div(class = "analysis-output",
+          verbatimTextOutput("place_analysis")
+      ),
+      
+      h4("🗺️ Information Régionale"),
+      tags$p("Cliquez sur une région ou un espace vide de la carte", 
+             style = "font-style: italic; color: #666; font-size: 12px;"),
+      div(class = "analysis-output",
+          verbatimTextOutput("region_analysis")
+      ),
+      
+      tags$hr(),
+      tags$p("📚 Sources : OpenStreetMap, GADM, WorldPop (2025)", 
+             style = "font-size: 10px; color: grey; margin-top: 20px; text-align: center;")
+    ),
+    
+    mainPanel(
+      width = 9,
+      class = "main-panel",
+      leafletOutput("interactive_map", height = "800px")
+    )
+  )
+)
+
+# ====================================================================
+# LOGIQUE SERVEUR
+# ====================================================================
+
+server <- function(input, output, session) {
+  
+  # Valeurs réactives
+  rv_analysis <- reactiveValues(
+    hospital_data = "Cliquez sur un hôpital (point rouge) pour analyser le tampon.",
+    place_data = "Cliquez sur une localité (point coloré) pour trouver l'hôpital le plus proche.",
+    region_data = "Cliquez sur une région ou un espace vide de la carte pour obtenir les informations régionales.",
+    clicked_hospital_id = NULL,
+    clicked_place_id = NULL,
+    clicked_region = NULL,
+    current_buffers = NULL
+  )
+  
+  # Fonction pour extraire la population d'une zone
+  extract_population <- function(zone_sf) {
+    tryCatch({
+      # Convertir en CRS métrique pour l'extraction
+      zone_metric <- st_transform(zone_sf, CRS_METRIQUE_EPSG)
+      
+      # Extraire les valeurs de population
+      pop_values <- extract(worldpop_projete, zone_metric, fun = sum, na.rm = TRUE)
+      
+      if (!is.null(pop_values) && ncol(pop_values) >= 2 && !is.na(pop_values[[2]][1])) {
+        return(pop_values[[2]][1])
+      } else {
+        return(0)
+      }
+    }, error = function(e) {
+      cat("Erreur extraction population:", e$message, "\n")
+      return(0)
+    })
+  }
+  
+  # Calcul réactif du tampon
+  buffer_a_afficher <- reactive({
+    req(input$buffer_dist)
+    dist_m <- input$buffer_dist * 1000
+    
+    if (dist_m > 0) {
+      buffers <- st_buffer(hopital_projete, dist = dist_m)
+      buffers_wgs84 <- st_transform(buffers, 4326)
+      return(buffers_wgs84)
+    } else {
+      return(NULL)
+    }
+  })
+  
+  # Carte Leaflet principale - VERSION SIMPLIFIÉE
+  output$interactive_map <- renderLeaflet({
+    # Palette pour les types de localités
+    palette_localites <- colorFactor(
+      viridis_pal(option = "C")(length(fclass_display)),
+      domain = fclass_display
+    )
+    
+    # Palette pour les régions
+    population_values <- regions_wgs84$`Population de la région`
+    palette_regions <- colorNumeric("Blues", domain = population_values, na.color = "transparent")
+    
+    # Créer des labels pour les hôpitaux
+    hopital_labels <- sprintf(
+      "<strong>🏥 %s</strong><br/>📍 Région: %s<br/>🏛️ Département: %s<br/>👥 Population régionale: %s",
+      hopitaux_wgs84$Nom_Hopital,
+      ifelse(is.na(hopitaux_wgs84$Région), "Non spécifié", hopitaux_wgs84$Région),
+      ifelse(is.na(hopitaux_wgs84$Département), "Non spécifié", hopitaux_wgs84$Département),
+      format(round(hopitaux_wgs84$`Population de la région`), big.mark = " ", scientific = FALSE)
+    ) %>% lapply(htmltools::HTML)
+    
+    # Créer des labels pour les régions
+    region_labels <- sprintf(
+      "<strong>🗺️ %s</strong><br/>👥 Population: %s habitants<br/>🏥 Hôpitaux: %s",
+      regions_wgs84$Région,
+      format(round(regions_wgs84$`Population de la région`), big.mark = " ", scientific = FALSE),
+      regions_wgs84$`Nombre d'hôpitaux dans la région`
+    ) %>% lapply(htmltools::HTML)
+    
+    # Créer des labels pour les localités
+    localite_labels <- sprintf(
+      "<strong>🏠 %s</strong><br/>📋 Type: %s<br>📍 Hôpital le plus proche: %s<br>📏 Distance: %s km",
+      localites_wgs84$Nom,
+      localites_wgs84$`Type de localité`,
+      localites_wgs84$`Hôpital le plus proche`,
+      localites_wgs84$`Distance (km)`
+    ) %>% lapply(htmltools::HTML)
+    
+    # Créer la carte
+    leaflet() %>%
+      addTiles() %>%
+      # Centrer sur le Cameroun
+      setView(lng = 12.354722, lat = 7.369722, zoom = 6) %>%
+      # Régions administratives
+      addPolygons(
+        data = regions_wgs84,
+        group = "Régions administratives",
+        color = "#2c3e50",
+        weight = 2,
+        fillOpacity = 0.3,
+        fillColor = ~palette_regions(`Population de la région`),
+        label = region_labels,
+        layerId = ~Région,
+        highlightOptions = highlightOptions(
+          weight = 3,
+          color = "#e74c3c",
+          fillOpacity = 0.5,
+          bringToFront = TRUE
+        )
+      ) %>%
+      # Hôpitaux
+      addCircleMarkers(
+        data = hopitaux_wgs84,
+        group = "Hôpitaux",
+        color = "#c0392b",
+        fillColor = "#e74c3c",
+        fillOpacity = 0.9,
+        radius = 8,
+        stroke = TRUE,
+        weight = 2,
+        label = hopital_labels,
+        layerId = ~hopital_id,
+        popup = ~paste(
+          "<div style='max-width: 300px;'>",
+          "<h4 style='color: #c0392b;'>🏥", Nom_Hopital, "</h4>",
+          "<hr style='margin: 5px 0;'>",
+          "<strong>📍 Région:</strong> ", ifelse(is.na(Région), "Non spécifié", Région), "<br>",
+          "<strong>🏛️ Département:</strong> ", ifelse(is.na(Département), "Non spécifié", Département), "<br>",
+          "<strong>🏥 Hôpitaux dans la région:</strong> ", `Nombre d'hôpitaux dans la région`, "<br>",
+          "<strong>👥 Population régionale:</strong> ", format(round(`Population de la région`), big.mark = " "), " habitants",
+          "</div>"
+        )
+      ) %>%
+      # Localités
+      addCircleMarkers(
+        data = localites_wgs84,
+        group = "Localités",
+        color = ~palette_localites(`Type de localité`),
+        fillColor = ~palette_localites(`Type de localité`),
+        fillOpacity = 0.8,
+        radius = 5,
+        stroke = TRUE,
+        weight = 1,
+        label = localite_labels,
+        layerId = ~place_id,
+        popup = ~paste(
+          "<div style='max-width: 300px;'>",
+          "<h4 style='color: #2c3e50;'>🏠", Nom, "</h4>",
+          "<hr style='margin: 5px 0;'>",
+          "<strong>📋 Type:</strong> ", `Type de localité`, "<br>",
+          "<strong>📍 Hôpital le plus proche:</strong> ", `Hôpital le plus proche`, "<br>",
+          "<strong>📏 Distance:</strong> ", `Distance (km)`, " km",
+          "</div>"
+        )
+      ) %>%
+      # Contrôle des couches
+      addLayersControl(
+        overlayGroups = c("Régions administratives", "Hôpitaux", "Localités"),
+        options = layersControlOptions(collapsed = FALSE)
+      ) %>%
+      # Légende pour les localités
+      addLegend(
+        position = "bottomright",
+        pal = palette_localites,
+        values = fclass_display,
+        title = "Type de localité",
+        opacity = 0.8
+      ) %>%
+      # Légende pour les régions
+      addLegend(
+        position = "bottomleft",
+        pal = palette_regions,
+        values = population_values,
+        title = "Population régionale",
+        opacity = 0.6,
+        labFormat = labelFormat(big.mark = " ")
+      )
+  })
+  
+  # Mise à jour des buffers
+  observe({
+    buffers <- buffer_a_afficher()
+    rv_analysis$current_buffers <- buffers
+    
+    leafletProxy("interactive_map") %>%
+      clearGroup("Zones de tampon")
+    
+    if (!is.null(buffers)) {
+      leafletProxy("interactive_map") %>%
+        addPolygons(
+          data = buffers,
+          group = "Zones de tampon",
+          color = "#e74c3c",
+          weight = 1,
+          fillColor = "lightcoral",
+          fillOpacity = 0.3,
+          label = paste("Zone d'accès", input$buffer_dist, "km")
+        ) %>%
+        addLayersControl(
+          overlayGroups = c("Régions administratives", "Hôpitaux", "Localités", "Zones de tampon"),
+          options = layersControlOptions(collapsed = FALSE)
+        )
+    }
+  })
+  
+  # Filtrage des localités
+  observe({
+    localites_filtrees <- localites_wgs84 %>%
+      filter(`Type de localité` %in% input$fclass_select)
+    
+    palette_localites <- colorFactor(
+      viridis_pal(option = "C")(length(fclass_display)),
+      domain = fclass_display
+    )
+    
+    localite_labels <- sprintf(
+      "<strong>🏠 %s</strong><br/>📋 Type: %s<br>📍 Hôpital le plus proche: %s<br>📏 Distance: %s km",
+      localites_filtrees$Nom,
+      localites_filtrees$`Type de localité`,
+      localites_filtrees$`Hôpital le plus proche`,
+      localites_filtrees$`Distance (km)`
+    ) %>% lapply(htmltools::HTML)
+    
+    leafletProxy("interactive_map") %>%
+      clearGroup("Localités") %>%
+      addCircleMarkers(
+        data = localites_filtrees,
+        group = "Localités",
+        color = ~palette_localites(`Type de localité`),
+        fillColor = ~palette_localites(`Type de localité`),
+        fillOpacity = 0.8,
+        radius = 5,
+        stroke = TRUE,
+        weight = 1,
+        label = localite_labels,
+        layerId = ~place_id,
+        popup = ~paste(
+          "<div style='max-width: 300px;'>",
+          "<h4 style='color: #2c3e50;'>🏠", Nom, "</h4>",
+          "<hr style='margin: 5px 0;'>",
+          "<strong>📋 Type:</strong> ", `Type de localité`, "<br>",
+          "<strong>📍 Hôpital le plus proche:</strong> ", `Hôpital le plus proche`, "<br>",
+          "<strong>📏 Distance:</strong> ", `Distance (km)`, " km",
+          "</div>"
+        )
+      )
+  })
+  
+  # Gestion des clics sur la carte (espaces vides)
+  observeEvent(input$interactive_map_click, {
+    click_data <- input$interactive_map_click
+    
+    # Réinitialiser les autres sélections
+    rv_analysis$clicked_hospital_id <- NULL
+    rv_analysis$clicked_place_id <- NULL
+    rv_analysis$clicked_region <- NULL
+    
+    # Vérifier si le clic est sur une région
+    if (!is.null(click_data)) {
+      click_point <- st_sf(
+        geometry = st_sfc(st_point(c(click_data$lng, click_data$lat)), crs = 4326)
+      )
+      
+      # Trouver la région correspondante
+      regions_intersected <- st_intersects(click_point, regions_wgs84)
+      
+      if (length(regions_intersected[[1]]) > 0) {
+        region_index <- regions_intersected[[1]][1]
+        rv_analysis$clicked_region <- regions_wgs84$Région[region_index]
+      } else {
+        rv_analysis$region_data <- "🌍 Aucune information régionale disponible pour cette zone.\nCliquez sur une région colorée pour obtenir des informations."
+      }
+    }
+  })
+  
+  # Gestion des clics sur les marqueurs
+  observeEvent(input$interactive_map_marker_click, {
+    click_data <- input$interactive_map_marker_click
+    
+    if (!is.null(click_data$id)) {
+      # Vérifier si c'est un hôpital
+      if (click_data$id %in% hopitaux_wgs84$hopital_id) {
+        rv_analysis$clicked_hospital_id <- click_data$id
+        rv_analysis$clicked_place_id <- NULL
+        rv_analysis$clicked_region <- NULL
+      } 
+      # Vérifier si c'est une localité
+      else if (click_data$id %in% localites_wgs84$place_id) {
+        rv_analysis$clicked_place_id <- click_data$id
+        rv_analysis$clicked_hospital_id <- NULL
+        rv_analysis$clicked_region <- NULL
+      }
+    }
+  })
+  
+  # Gestion des clics sur les polygones (régions)
+  observeEvent(input$interactive_map_shape_click, {
+    click_data <- input$interactive_map_shape_click
+    
+    if (!is.null(click_data$id) && click_data$id %in% regions_wgs84$Région) {
+      rv_analysis$clicked_region <- click_data$id
+      rv_analysis$clicked_hospital_id <- NULL
+      rv_analysis$clicked_place_id <- NULL
+    }
+  })
+  
+  # Analyse du clic sur un hôpital
+  observeEvent(rv_analysis$clicked_hospital_id, {
+    hospital_id_clicked <- rv_analysis$clicked_hospital_id
+    
+    if (is.null(hospital_id_clicked) || hospital_id_clicked == "") return()
+    
+    clicked_hopital <- hopital_projete_enriched %>%
+      filter(hopital_id == hospital_id_clicked)
+    
+    if (nrow(clicked_hopital) == 0) return()
+    
+    dist_m <- input$buffer_dist * 1000
+    
+    if (dist_m > 0) {
+      buffer_clicked <- st_buffer(clicked_hopital, dist = dist_m)
+      
+      # Extraction de la population dans le buffer
+      total_pop_in_buffer <- extract_population(buffer_clicked)
+      
+      # Comptage des localités par type (dans le tampon uniquement)
+      localities_in_buffer <- st_filter(place_projete_enriched, buffer_clicked, 
+                                        .predicate = st_intersects)
+      
+      locality_counts <- localities_in_buffer %>%
+        st_drop_geometry() %>%
+        group_by(`Type de localité`) %>%
+        tally(name = "Count") %>%
+        arrange(desc(Count))
+      
+      locality_text <- if (nrow(locality_counts) > 0) {
+        paste(sapply(1:nrow(locality_counts), function(i) {
+          paste("  • ", locality_counts$`Type de localité`[i], ": ", locality_counts$Count[i])
+        }), collapse = "\n")
+      } else {
+        "  Aucune localité trouvée dans le tampon."
+      }
+      
+      # Calcul du nombre total de localités
+      total_localities <- sum(locality_counts$Count, na.rm = TRUE)
+      
+      rv_analysis$hospital_data <- sprintf(
+        "🏥 HÔPITAL SÉLECTIONNÉ : %s\n📏 Distance de Tampon : %d km\n%s\n👥 POPULATION COUVERTE :\n%s habitants\n%s\n🏘️ LOCALITÉS COUVERTES :\nTotal : %d localité(s)\n%s\n📊 Détail par type :\n%s\n%s\n🗺️ INFORMATIONS RÉGIONALES :\n📍 Région : %s\n👥 Population régionale : %s habitants\n🏥 Hôpitaux dans la région : %s\n%s\n💡 Conseil : Ajustez la distance du tampon pour modifier la zone d'analyse.",
+        clicked_hopital$Nom_Hopital,
+        input$buffer_dist,
+        strrep("=", 50),
+        format(round(total_pop_in_buffer), big.mark = " ", scientific = FALSE),
+        strrep("=", 50),
+        total_localities,
+        strrep("-", 30),
+        locality_text,
+        strrep("=", 50),
+        ifelse(is.na(clicked_hopital$Région), "Non spécifié", clicked_hopital$Région),
+        format(round(clicked_hopital$`Population de la région`), big.mark = " ", scientific = FALSE),
+        clicked_hopital$`Nombre d'hôpitaux dans la région`,
+        strrep("=", 50)
+      )
+    } else {
+      rv_analysis$hospital_data <- sprintf(
+        "🏥 HÔPITAL SÉLECTIONNÉ : %s\n📏 Distance de Tampon : 0 km\n%s\n❌ Augmentez la distance du tampon pour effectuer l'analyse.\n%s\n🗺️ INFORMATIONS RÉGIONALES :\n📍 Région : %s\n👥 Population régionale : %s habitants\n🏥 Hôpitaux dans la région : %s\n%s\n💡 Conseil : Augmentez la distance du tampon pour analyser la couverture.",
+        clicked_hopital$Nom_Hopital,
+        strrep("-", 50),
+        strrep("=", 50),
+        ifelse(is.na(clicked_hopital$Région), "Non spécifié", clicked_hopital$Région),
+        format(round(clicked_hopital$`Population de la région`), big.mark = " ", scientific = FALSE),
+        clicked_hopital$`Nombre d'hôpitaux dans la région`,
+        strrep("=", 50)
+      )
+    }
+  })
+  
+  # Analyse du clic sur une localité
+  observeEvent(rv_analysis$clicked_place_id, {
+    place_id_clicked <- rv_analysis$clicked_place_id
+    
+    if (is.null(place_id_clicked) || place_id_clicked == "") return()
+    
+    clicked_place <- place_projete_enriched %>%
+      filter(place_id == place_id_clicked)
+    
+    if (nrow(clicked_place) > 0) {
+      rv_analysis$place_data <- sprintf(
+        "🏠 LOCALITÉ SÉLECTIONNÉE : %s\n📋 Type : %s\n%s\n📍 Hôpital le plus proche : %s\n📏 Distance : %s km\n%s\n💡 Conseil : Cette distance représente le trajet à vol d'oiseau jusqu'à l'hôpital le plus proche.",
+        clicked_place$Nom,
+        clicked_place$`Type de localité`,
+        strrep("-", 40),
+        clicked_place$`Hôpital le plus proche`,
+        clicked_place$`Distance (km)`,
+        strrep("=", 40)
+      )
+    }
+  })
+  
+  # Analyse du clic sur une région
+  observeEvent(rv_analysis$clicked_region, {
+    region_name <- rv_analysis$clicked_region
+    
+    if (!is.null(region_name)) {
+      region_info <- regions_interactives %>%
+        filter(Région == region_name) %>%
+        st_drop_geometry()
+      
+      if (nrow(region_info) > 0) {
+        rv_analysis$region_data <- sprintf(
+          "🗺️ RÉGION SÉLECTIONNÉE : %s\n%s\n👥 Population : %s habitants\n🏥 Nombre d'hôpitaux : %s\n%s\n💡 Conseil : Cliquez sur un hôpital pour analyser sa couverture avec le tampon actuel de %d km.",
+          region_info$Région,
+          strrep("=", 40),
+          format(round(region_info$`Population de la région`), big.mark = " ", scientific = FALSE),
+          region_info$`Nombre d'hôpitaux dans la région`,
+          strrep("=", 40),
+          input$buffer_dist
+        )
+      }
+    }
+  })
+  
+  # Sorties textuelles
+  output$hospital_analysis <- renderPrint({
+    cat(rv_analysis$hospital_data)
+  })
+  
+  output$place_analysis <- renderPrint({
+    cat(rv_analysis$place_data)
+  })
+  
+  output$region_analysis <- renderPrint({
+    cat(rv_analysis$region_data)
+  })
+}
+
+# ====================================================================
+# LANCEMENT DE L'APPLICATION
+# ====================================================================
+
+shinyApp(ui = ui, server = server)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+library(leaflet)
+library(sf)
+library(terra)
+library(dplyr)
+library(tidyr)
+library(viridis)
+library(htmlwidgets)
+library(leaflet.extras)
+
+# ====================================================================
+# CONFIGURATION ET CHARGEMENT DES DONNÉES
+# ====================================================================
+
+base_path <- getwd()
+output_dir <- file.path(base_path, "export_carte_complete")
+
+if (!dir.exists(output_dir)) {
+  dir.create(output_dir, recursive = TRUE)
+  cat("Dossier de sortie créé :", output_dir, "\n")
+}
+
+# Chargement des données
+tryCatch({
+  HPT_shp <- file.path(base_path, "data/data2/202303-osm2igeo-cameroun-shp-wgs84-4326/202303_OSM2IGEO_CAMEROUN_SHP_WGS84_4326/I_OSM_ZONE_ACTIVITE/PAI_SANTE.shp")
+  hopital <- st_read(HPT_shp, quiet = TRUE)
+  
+  CMR_shp_3 <- file.path(base_path, "data/data2/shapefiles_limites_administratives_GADM_Cameroun/gadm41_CMR_3.shp")
+  cameroun_limite_3 <- st_read(CMR_shp_3, quiet = TRUE)
+  
+  place_shp <- file.path(base_path, "data/data2/cameroon-251116-free.shp/gis_osm_places_free_1.shp")
+  place <- st_read(place_shp, quiet = TRUE)
+  fclass_display <- c("city", "town", "village", "hamlet", "suburb", "locality", "national_capital")
+  place <- place %>% filter(fclass %in% fclass_display)
+  
+  raster_file_path <- file.path(base_path, "data/data2/worldpop/cmr_pop_2025_CN_100m_R2024B_v1.tif")
+  worldpop <- rast(raster_file_path)
+  
+  cat("Données chargées avec succès.\n")
+}, error = function(e) {
+  stop("Erreur chargement données : ", e$message)
+})
+
+# Vérification des données WorldPop
+cat("=== VÉRIFICATION WORLDPOP ===\n")
+cat("Population totale raster:", global(worldpop, "sum", na.rm = TRUE)[[1]], "hab\n")
+cat("=====================================\n")
+
+# Projection
+CRS_WGS84 <- "EPSG:4326"
+regions_wgs84 <- st_transform(cameroun_limite_3, crs = CRS_WGS84)
+hopital_wgs84 <- st_transform(hopital, crs = CRS_WGS84)
+place_wgs84 <- st_transform(place, crs = CRS_WGS84)
+
+# ====================================================================
+# EXTRACTION RÉELLE - SOMME DES PIXELS PAR RÉGION
+# ====================================================================
+
+# 1. Hôpitaux par région
+hopitaux_par_region <- st_join(hopital_wgs84, regions_wgs84, join = st_intersects) %>%
+  st_drop_geometry() %>% group_by(NAME_1) %>% tally(name = "Nb_Hopitaux") %>% ungroup()
+
+# 2. SOMME DIRECTE DES PIXELS PAR RÉGION
+cat("SOMME DIRECTE des pixels WorldPop par région...\n")
+
+# Préparer les régions avec superficie
+regions_avec_superficie <- regions_wgs84 %>% 
+  group_by(NAME_1) %>% 
+  summarise(geometry = st_union(geometry)) %>% 
+  ungroup() %>% 
+  st_make_valid() %>%
+  mutate(
+    Superficie_km2 = as.numeric(st_area(geometry)) / 1e6
+  )
+
+# Fonction pour SOMMER les pixels d'une région
+sommer_pixels_region <- function(region_sf) {
+  tryCatch({
+    region_name <- region_sf$NAME_1
+    
+    # Convertir la région en vecteur terra
+    region_vect <- vect(region_sf)
+    
+    # Méthode robuste : crop + mask + somme globale
+    raster_crop <- crop(worldpop, region_vect)
+    raster_mask <- mask(raster_crop, region_vect)
+    
+    # SOMME DIRECTE des valeurs des pixels
+    somme_pixels <- global(raster_mask, "sum", na.rm = TRUE)[[1]]
+    
+    if (is.na(somme_pixels)) {
+      somme_pixels <- 0
+    }
+    
+    cat("Région:", region_name, "- Population:", round(somme_pixels), "hab\n")
+    return(somme_pixels)
+    
+  }, error = function(e) {
+    cat("Erreur pour", region_sf$NAME_1, ": 0 hab\n")
+    return(0)
+  })
+}
+
+# Appliquer la somme des pixels pour chaque région
+populations_regions <- numeric(nrow(regions_avec_superficie))
+
+for (i in 1:nrow(regions_avec_superficie)) {
+  region <- regions_avec_superficie[i, ]
+  populations_regions[i] <- sommer_pixels_region(region)
+}
+
+# CORRECTION : Garder toutes les colonnes nécessaires ensemble
+population_par_region <- regions_avec_superficie %>%
+  mutate(Population = populations_regions) %>%
+  # NE PAS supprimer la géométrie et garder Superficie_km2
+  select(NAME_1, Population, Superficie_km2, geometry)
+
+# 3. CALCUL DES DENSITÉS (SEULEMENT APRÈS LA SOMME) - CORRIGÉ
+regions_interactives <- population_par_region %>%
+  left_join(hopitaux_par_region, by = "NAME_1") %>%
+  mutate(
+    Nb_Hopitaux = replace_na(Nb_Hopitaux, 0),
+    Population = replace_na(Population, 0),
+    # DENSITÉ CALCULÉE À PARTIR DES DONNÉES RÉELLES
+    Densite_hab_km2 = round(Population / Superficie_km2, 2)
+  ) %>% 
+  rename(Région = NAME_1)
+
+# 4. STATISTIQUES NATIONALES - SOMME DES RÉGIONS
+population_totale_nationale <- sum(population_par_region$Population, na.rm = TRUE)
+superficie_totale_nationale <- sum(regions_avec_superficie$Superficie_km2, na.rm = TRUE)
+
+cameroun_global <- data.frame(
+  Superficie_totale_km2 = superficie_totale_nationale,
+  Population_totale = population_totale_nationale
+) %>%
+  mutate(
+    Densite_totale = round(Population_totale / Superficie_totale_km2, 2)
+  )
+
+# Vérification cohérence
+population_raster_totale <- global(worldpop, "sum", na.rm = TRUE)[[1]]
+
+cat("\n=== VÉRIFICATION COHÉRENCE ===\n")
+cat("Population totale (raster WorldPop):", round(population_raster_totale), "hab\n")
+cat("Population totale (somme régions):", round(population_totale_nationale), "hab\n")
+cat("Différence:", round(population_raster_totale - population_totale_nationale), "hab\n")
+cat("Ratio:", round(population_totale_nationale/population_raster_totale * 100, 1), "%\n")
+cat("Superficie totale:", round(superficie_totale_nationale), "km²\n")
+cat("Densité moyenne:", cameroun_global$Densite_totale, "hab/km²\n")
+
+# Afficher le détail par région
+cat("\n=== DÉTAIL PAR RÉGION ===\n")
+regions_interactives %>%
+  st_drop_geometry() %>%
+  select(Région, Population, Superficie_km2, Densite_hab_km2) %>%
+  arrange(desc(Population)) %>%
+  print(n = Inf)
+cat("======================================\n")
+
+# 5. Hôpitaux enrichis avec données réelles
+hopital_enriched <- hopital_wgs84 %>%
+  mutate(unique_id = paste0("h_", row_number())) %>%
+  st_join(regions_wgs84 %>% select(NAME_1, NAME_2), join = st_intersects) %>%
+  left_join(hopitaux_par_region, by = "NAME_1") %>%
+  left_join(
+    regions_interactives %>% st_drop_geometry() %>% select(Région, Population, Superficie_km2, Densite_hab_km2), 
+    by = c("NAME_1" = "Région")
+  ) %>%
+  rename(Nom_Hopital = NOM, Région = NAME_1, Département = NAME_2) %>%
+  mutate(
+    Nb_Hopitaux = replace_na(Nb_Hopitaux, 0), 
+    Population = replace_na(Population, 0),
+    Superficie_km2 = replace_na(Superficie_km2, 0),
+    Densite_hab_km2 = round(Population / Superficie_km2, 2)
+  )
+
+# 6. Localités avec distances et PRIORITÉ (conservée mais non affichée)
+place_enriched <- place_wgs84 %>%
+  mutate(place_id = paste0("p_", row_number())) %>%
+  mutate(
+    nearest_hopital_index = st_nearest_feature(., hopital_wgs84),
+    nearest_hopital_name = hopital_wgs84$NOM[nearest_hopital_index],
+    distance_to_nearest_hopital_m = st_distance(., hopital_wgs84[nearest_hopital_index, ], by_element = TRUE),
+    Distance_km = round(as.numeric(distance_to_nearest_hopital_m) / 1000, 2),
+    # PRIORITÉ conservée pour l'ordre d'affichage mais non affichée
+    Priorite = case_when(
+      fclass == "national_capital" ~ 100,
+      fclass == "city" ~ 90,
+      fclass == "town" ~ 80,
+      fclass == "suburb" ~ 70,
+      fclass == "village" ~ 60,
+      fclass == "locality" ~ 50,
+      fclass == "hamlet" ~ 40,
+      TRUE ~ 10
+    ),
+    # TERMINOLOGIE FRANÇAISE AMÉLIORÉE
+    Type_entite = case_when(
+      fclass == "national_capital" ~ "Capitale Nationale",
+      fclass == "city" ~ "Ville Principale",
+      fclass == "town" ~ "Ville Secondaire",
+      fclass == "suburb" ~ "Quartier Périphérique",
+      fclass == "village" ~ "Village",
+      fclass == "locality" ~ "Localité",
+      fclass == "hamlet" ~ "Hameau",
+      TRUE ~ "Entité Territoriale"
+    )
+  ) %>% 
+  rename(Nom = name) %>%
+  arrange(desc(Priorite))  # Trie par priorité décroissante
+
+# ====================================================================
+# CRÉATION DE LA CARTE AVEC DONNÉES RÉELLES
+# ====================================================================
+
+creer_carte_avancee <- function() {
+  cat("🔄 Création de la carte avec données réelles...\n")
+  
+  # PALETTE DE COULEURS - version précédente qui fonctionnait
+  types_entites <- c("Capitale Nationale", "Ville Principale", "Ville Secondaire", 
+                     "Quartier Périphérique", "Village", "Localité", "Hameau")
+  
+  # Couleurs dégressives du rouge au vert
+  palette_entites <- colorFactor(
+    palette = c(
+      "Capitale Nationale" = "#B22222",    # Rouge brique
+      "Ville Principale" = "#DC143C",      # Crimson
+      "Ville Secondaire" = "#FF6347",      # Tomato
+      "Quartier Périphérique" = "#FFA500", # Orange
+      "Village" = "#FFD700",               # Gold
+      "Localité" = "#9ACD32",              # YellowGreen
+      "Hameau" = "#32CD32"                 # LimeGreen
+    ),
+    domain = types_entites
+  )
+  
+  palette_regions <- colorNumeric("YlOrRd", domain = regions_interactives$Densite_hab_km2, na.color = "transparent")
+  
+  # Labels avec données réelles
+  hopital_labels <- sprintf(
+    "<strong>🏥 %s</strong><br>📍 Région: %s<br>🏛️ Département: %s<br>👥 Population: %s<br>📐 Superficie: %s km²<br>📊 Densité: %s hab/km²<br>🏥 Hôpitaux région: %s",
+    hopital_enriched$Nom_Hopital,
+    ifelse(is.na(hopital_enriched$Région), "Non spécifié", hopital_enriched$Région),
+    ifelse(is.na(hopital_enriched$Département), "Non spécifié", hopital_enriched$Département),
+    format(round(hopital_enriched$Population), big.mark = " "),
+    format(round(hopital_enriched$Superficie_km2), big.mark = " "),
+    format(round(hopital_enriched$Densite_hab_km2), big.mark = " "),
+    hopital_enriched$Nb_Hopitaux
+  ) %>% lapply(htmltools::HTML)
+  
+  entite_labels <- sprintf(
+    "<strong>%s %s</strong><br>📋 Type: %s<br>📍 Hôpital proche: %s<br>📏 Distance: %s km",
+    case_when(
+      place_enriched$Type_entite == "Capitale Nationale" ~ "🏛️",
+      place_enriched$Type_entite == "Ville Principale" ~ "🏙️",
+      place_enriched$Type_entite == "Ville Secondaire" ~ "🏘️",
+      place_enriched$Type_entite == "Quartier Périphérique" ~ "🏢",
+      place_enriched$Type_entite == "Village" ~ "🏡",
+      place_enriched$Type_entite == "Localité" ~ "📍",
+      place_enriched$Type_entite == "Hameau" ~ "🏠",
+      TRUE ~ "🏠"
+    ),
+    place_enriched$Nom,
+    place_enriched$Type_entite,
+    place_enriched$nearest_hopital_name,
+    place_enriched$Distance_km
+  ) %>% lapply(htmltools::HTML)
+  
+  # Panneau de contrôle avec données réelles
+  total_hospitals <- nrow(hopital_enriched)
+  total_entites <- nrow(place_enriched)
+  total_regions <- nrow(regions_interactives)
+  
+  control_html <- HTML(paste0(
+    '<div id="custom-control" style="background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.2); max-width: 320px;">
+      <h4 style="margin: 0 0 15px 0; color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 8px;">
+        🏥 Carte de Couverture Sanitaire
+      </h4>
+      
+      <div style="margin-bottom: 15px;">
+        <h5 style="margin: 0 0 8px 0; color: #34495e; font-size: 14px;">🇨🇲 Cameroun - Données Réelles :</h5>
+        <div style="font-size: 11px; line-height: 1.4; background: #e8f7f0; padding: 8px; border-radius: 4px; border-left: 4px solid #27ae60;">
+          <div>🗺️ <strong>Superficie:</strong> ', format(round(cameroun_global$Superficie_totale_km2), big.mark = " "), ' km²</div>
+          <div>👥 <strong>Population:</strong> ', format(round(cameroun_global$Population_totale), big.mark = " "), ' hab</div>
+          <div>📊 <strong>Densité:</strong> ', cameroun_global$Densite_totale, ' hab/km²</div>
+          <div style="font-size: 9px; color: #27ae60; margin-top: 3px;">
+            📍 Données WorldPop 2025 - Somme directe des pixels
+          </div>
+        </div>
+      </div>
+      
+      <div style="margin-bottom: 15px;">
+        <h5 style="margin: 0 0 8px 0; color: #34495e; font-size: 14px;">📊 Infrastructures :</h5>
+        <div style="font-size: 11px; line-height: 1.4;">
+          <div>🏥 <strong>Hôpitaux:</strong> ', total_hospitals, '</div>
+          <div>🏘️ <strong>Entités Territoriales:</strong> ', total_entites, '</div>
+          <div>🗺️ <strong>Régions:</strong> ', total_regions, '</div>
+        </div>
+      </div>
+    </div>'
+  ))
+  
+  # Création de la carte - VERSION PRÉCÉDENTE QUI FONCTIONNAIT
+  carte <- leaflet() %>%
+    addTiles() %>%
+    setView(lng = 12.354722, lat = 7.369722, zoom = 6) %>%
+    
+    # Couche des régions avec densités RÉELLES
+    addPolygons(
+      data = regions_interactives,
+      group = "Régions administratives",
+      color = "#2c3e50", weight = 2, fillOpacity = 0.4,
+      fillColor = ~palette_regions(Densite_hab_km2),
+      label = ~sprintf(
+        "<strong>🗺️ %s</strong><br>👥 Population: %s<br>🏥 Hôpitaux: %s<br>📐 Superficie: %s km²<br>📊 Densité: %s hab/km²", 
+        Région, 
+        format(round(Population), big.mark = " "), 
+        Nb_Hopitaux,
+        format(round(Superficie_km2), big.mark = " "),
+        format(round(Densite_hab_km2), big.mark = " ")
+      ) %>% lapply(htmltools::HTML),
+      highlightOptions = highlightOptions(weight = 3, color = "#e74c3c", fillOpacity = 0.6)
+    ) %>%
+    
+    # Couche des ENTITÉS TERRITORIALES
+    addCircleMarkers(
+      data = place_enriched,
+      group = "Entités Territoriales",
+      color = ~palette_entites(Type_entite),
+      fillColor = ~palette_entites(Type_entite), 
+      fillOpacity = 0.9,
+      radius = ~case_when(
+        Priorite >= 90 ~ 10,
+        Priorite >= 80 ~ 8,
+        Priorite >= 70 ~ 6,
+        Priorite >= 60 ~ 5,
+        TRUE ~ 4
+      ),
+      stroke = TRUE, 
+      weight = ~case_when(
+        Priorite >= 90 ~ 3,
+        Priorite >= 80 ~ 2,
+        TRUE ~ 1
+      ),
+      label = entite_labels,
+      options = pathOptions(interactive = TRUE),
+      clusterOptions = markerClusterOptions(
+        zoomToBoundsOnClick = TRUE,
+        spiderfyOnMaxZoom = TRUE,
+        showCoverageOnHover = TRUE
+      )
+    ) %>%
+    
+    # Couche des hôpitaux
+    addCircleMarkers(
+      data = hopital_enriched,
+      group = "Hôpitaux",
+      color = "#c0392b", 
+      fillColor = "#e74c3c", 
+      fillOpacity = 0.95,
+      radius = 8, 
+      stroke = TRUE, 
+      weight = 3,
+      label = hopital_labels,
+      options = pathOptions(interactive = TRUE)
+    ) %>%
+    
+    # Fonctionnalités
+    addMeasure(
+      position = "topleft",
+      primaryLengthUnit = "kilometers",
+      primaryAreaUnit = "sqmeters",
+      activeColor = "#3D535D",
+      completedColor = "#7D4479"
+    ) %>%
+    
+    addLayersControl(
+      overlayGroups = c("Hôpitaux", "Entités Territoriales", "Régions administratives"),
+      options = layersControlOptions(collapsed = FALSE)
+    ) %>%
+    
+    addResetMapButton() %>%
+    
+    # LÉGENDE - version précédente
+    addLegend(
+      position = "bottomright",
+      pal = palette_entites, 
+      values = types_entites,
+      title = "Type d'entité territoriale", 
+      opacity = 0.9
+    ) %>%
+    
+    addLegend(
+      position = "bottomleft",
+      pal = palette_regions, 
+      values = regions_interactives$Densite_hab_km2,
+      title = "Densité (hab/km²)", 
+      opacity = 0.7,
+      labFormat = labelFormat(big.mark = " ")
+    ) %>%
+    
+    addControl(
+      html = control_html,
+      position = "topright"
+    ) %>%
+    
+    # RECHERCHE
+    addSearchFeatures(
+      targetGroups = c("Hôpitaux", "Entités Territoriales"),
+      options = searchFeaturesOptions(
+        zoom = 18,
+        openPopup = TRUE,
+        firstTipSubmit = TRUE,
+        autoCollapse = FALSE,
+        hideMarkerOnCollapse = TRUE,
+        position = "topleft"
+      )
+    )
+  
+  cat("✅ Carte créée avec succès!\n")
+  return(carte)
+}
+
+# ====================================================================
+# EXPORT
+# ====================================================================
+
+exporter_carte_complete <- function() {
+  cat("🚀 Export de la carte avec données réelles...\n")
+  
+  carte_complete <- creer_carte_avancee()
+  html_file <- file.path(output_dir, "carte_couverture_reelle_cameroun.html")
+  
+  saveWidget(
+    carte_complete,
+    file = html_file,
+    selfcontained = TRUE,
+    title = "Carte Interactive - Données WorldPop Réelles - Cameroun"
+  )
+  
+  if (file.exists(html_file)) {
+    cat("🎉 SUCCÈS ! Carte exportée :", html_file, "\n")
+    browseURL(html_file)
+    return(html_file)
+  } else {
+    cat("❌ ERREUR : Export échoué\n")
+    return(NULL)
+  }
+}
+
+# LANCEMENT
+exporter_carte_complete()

@@ -1,0 +1,26 @@
+{
+    "id": "274255AC",
+    "path": "C:/Users/DELL/Desktop/TP3_SES_2025_2026_ASTOU_MAREME_LANDRY_YAMAHA/scripts/Repartition_hôpitaux_entités_territoriales.R",
+    "project_path": "scripts/Repartition_hôpitaux_entités_territoriales.R",
+    "type": "r_source",
+    "hash": "0",
+    "contents": "",
+    "dirty": false,
+    "created": 1764035038945.0,
+    "source_on_save": false,
+    "relative_order": 13,
+    "properties": {
+        "source_window_id": "",
+        "Source": "Source",
+        "cursorPosition": "449,21",
+        "scrollLine": "437"
+    },
+    "folds": "",
+    "lastKnownWriteTime": 1764036421,
+    "encoding": "UTF-8",
+    "collab_server": "",
+    "source_window": "",
+    "last_content_update": 1764036421290,
+    "read_only": false,
+    "read_only_alternatives": []
+}

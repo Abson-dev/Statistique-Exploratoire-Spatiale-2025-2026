@@ -1,0 +1,223 @@
+# Chemin du nouveau répertoire d'outputs
+output_dir <- file.path(base_path, "outputs")
+
+# Créer le répertoire 'outputs' s'il n'existe pas
+if (!dir.exists(output_dir)) {
+  dir.create(output_dir, recursive = TRUE)
+  cat("Dossier de sortie créé à l'emplacement :", output_dir, "\n")
+} else {
+  cat("Le dossier de sortie existe déjà :", output_dir, "\n")
+}
+
+
+
+
+# Importation du shapefile des villes
+place_shp <- file.path(base_path, "/data/data2/cameroon-251116-free.shp/gis_osm_places_free_1.shp")
+
+# Importation du shapefile du Cameroun
+CMR_shp_1 <- file.path(base_path, "/data/data2/shapefiles_limites_administratives_GADM_Cameroun/gadm41_CMR_1.shp")
+
+
+# Lecture du shapefile des villes
+place <- st_read(place_shp)
+
+print(table(place$fclass))
+
+city <- place %>%
+filter(fclass == "national_capital" | fclass == "city")
+
+
+# Lecture du shapefile du cameroun
+cameroun_limite_1 <- st_read(CMR_shp_1)
+
+
+
+# --- VISUALISATION STATIQUE DES VILLES ---
+
+ggplot() +
+  
+  # Couche 1: Limites du Cameroun (Couche de fond)
+  geom_sf(data = cameroun_limite_1, 
+          fill = "grey95", 
+          color = "grey30", 
+          linewidth = 0.5) +
+  
+  # Couche 2: Villes
+  geom_sf(data = city, 
+          aes(color = "Ville"), 
+          shape = 16,        # Symbole de point plein (cercle)
+          size = 3,          # Taille du symbole
+          alpha = 0.8) +
+  
+  # Configuration des couleurs et de la légende pour les POINTS
+  scale_color_manual(name = "Légende :", 
+                     values = c("Ville" = "darkblue")) +
+  
+  # Ajout de titres et informations
+  labs(title = "Répartition des grandes villes du Cameroun",
+       caption = paste(
+         "Nombre de grandes villes du Cameroun :", nrow(city),
+         "\nSource : GADM (Limites administratives) & OpenStreetMap (Grands villes)"
+       )
+  ) +
+  
+  # Thème pour une meilleure présentation
+  theme_minimal() +
+  
+  # Ajustement de la taille, de la légende et de la caption
+  theme(
+    aspect.ratio = 1.2, 
+    axis.title = element_blank(),
+    axis.text = element_blank(),
+    axis.ticks = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    
+    # Déplacement de la légende
+    legend.position = "right",
+    
+    # Centrage du titre
+    plot.title = element_text(hjust = 0.5, face = "bold"),
+    
+    # Centrage de la caption
+    plot.caption = element_text(hjust = 0.5, size = 9, color = "grey30")
+  )
+
+# Chemin complet pour l'enregistrement
+output_file_path <- file.path(output_dir, "carte_statique_grande_ville.png")
+
+# Enregistrer le graphique
+ggsave(filename = output_file_path,
+       width = 8, 
+       height = 10, 
+       units = "in",
+       dpi = 300)
+
+
+
+# --- A. PRÉPARATION DES DONNÉES SPATIALES POUR LA VISUALISATION DYNAMIQUE ---
+
+CRS_METRIQUE <- 32633 
+
+# 1. Filtrer et Projeter les Villes
+city_filtre <- place %>%
+  filter(fclass %in% c("national_capital", "city"))
+
+regions_cameroun_projete <- st_transform(cameroun_limite_1, crs = CRS_METRIQUE)
+city_projete <- st_transform(city_filtre, crs = CRS_METRIQUE)
+
+# 2. Calcul du total national 
+total_villes_statique <- as.character(nrow(city_projete))
+
+# 3. Jointure et comptage des villes par Région
+
+# a) Compter le nombre de villes par région
+villes_par_region <- st_join(city_projete, regions_cameroun_projete, join = st_intersects) %>%
+  st_drop_geometry() %>%
+  group_by(NAME_1) %>%
+  tally(name = "Nb_Villes") %>%
+  ungroup()
+
+# b) Créer l'objet régions enrichi (Couche 1 du tmap: Clic sur Région)
+regions_interactives_villes <- regions_cameroun_projete %>%
+  left_join(villes_par_region, by = "NAME_1") %>%
+  mutate(Nb_Villes = replace_na(Nb_Villes, 0)) %>%
+  # Renommer les colonnes au format désiré pour le pop-up de la Région
+  rename(Région = NAME_1,
+         `Nombre de grandes villes dans la région` = Nb_Villes) %>% 
+  select(Région, `Nombre de grandes villes dans la région`) 
+
+
+# c) Créer l'objet villes enrichi (Couche 2 du tmap: Clic sur Ville)
+city_projete_enriched <- st_join(city_projete, 
+                                 regions_cameroun_projete %>% select(NAME_1), 
+                                 join = st_intersects, 
+                                 left = FALSE) %>%
+  left_join(villes_par_region, by = "NAME_1") %>% 
+  
+  # Renommer toutes les colonnes au format désiré pour le pop-up de la Ville
+  rename(Région = NAME_1,
+         Ville = name,
+         Population = population,
+         `Nombre de grandes villes dans la région` = Nb_Villes) %>%
+  
+  # Ajouter la colonne de correction du pop-up en première position
+  mutate(popup_fix = "") %>% 
+  
+  # Sélectionner les colonnes finales
+  select(popup_fix, Ville, Population, Région, `Nombre de grandes villes dans la région`) 
+
+# ----------------------------------------------------------------------
+
+
+
+# --- B. VISUALISATION DYNAMIQUE (tmap)
+
+tmap_mode("view")
+options(tmap.mode = "view")
+
+carte_villes_dynamique <- 
+  tm_basemap(server = "OpenStreetMap") +
+  
+  # COUCHE 1 : RÉGIONS (CONTOURS ET INTERACTIVITÉ)
+  tm_shape(regions_interactives_villes, 
+           name = "Régions administratives",
+           # Utiliser popup.vars = TRUE pour afficher TOUTES les colonnes
+           popup.vars = TRUE) + 
+  tm_borders(col = "grey50", lwd = 1) +
+  tm_fill(col = "grey50", alpha = 0.01) +
+
+  
+  # COUCHE 2 : VILLES (POINTS ET INTERACTIVITÉ DÉTAILLÉE)
+  tm_shape(city_projete_enriched, name = "Grandes villes") +
+  tm_dots(col = "darkblue", 
+          shape = 16, 
+          size = 0.8, 
+          alpha = 0.8,
+          title = "Grandes villes",
+          
+          # On liste explicitement les noms des colonnes du pop-up.
+          # On exclut ainsi implicitement 'geometry' et 'popup_fix' n'est affiché qu'une fois.
+          popup.vars = c(" " = "popup_fix",
+                         "Ville" = "Ville", 
+                         "Population" = "Population", 
+                         "Région" = "Région", 
+                         "Nombre de grandes villes dans la région" = "Nombre de grandes villes dans la région")) +
+  
+  tm_add_legend(type = "symbol", 
+                col = "darkblue",
+                labels = "Grande ville",
+                title = "Légende :") +
+  
+  tm_layout(
+    title = "Répartition des grandes villes du Cameroun",
+    title.position = c("center", "top"),
+    title.size = 1.2,
+    frame = FALSE,
+    inner.margins = c(0.01, 0.01, 0.01, 0.01)
+  ) +
+  
+  tm_credits(text = paste("Nombre total de grandes villes :", total_villes_statique),
+             position = c("left", "bottom"),
+             size = 0.7,
+             col = "grey30") +
+  tm_credits(text = "Source : OpenStreetMap & GADM",
+             position = c("right", "bottom"), 
+             size = 0.6,
+             col = "grey30",
+             align = "right")
+
+# Affichage de la carte
+#print(carte_villes_dynamique)
+
+
+
+# --- Enregistrement de la carte dynamique en HTML ---
+
+# 1. Définir le chemin complet du fichier HTML
+
+output_file_html <- file.path(output_dir, "carte_grande_ville.html")
+
+# 2. Utiliser tmap_save() pour enregistrer
+tmap_save(tm = carte_villes_dynamique, filename = output_file_html)

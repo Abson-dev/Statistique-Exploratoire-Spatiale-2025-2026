@@ -1,0 +1,244 @@
+# Carte Interactive : Répartition Hôpitaux - Entités Territoriales
+
+Script R : `Repartition_hopitaux_entites_territoriales.R`
+
+## Description
+
+Ce script génère une carte interactive montrant la répartition des hôpitaux et des entités territoriales au Cameroun, avec analyse de la couverture sanitaire et calcul des distances aux infrastructures médicales.
+
+##  Fonctionnalités Principales
+
+**Découvrez une expérience cartographique unique** qui transforme des données complexes en insights actionnables ! Notre carte interactive vous permet d'explorer la couverture sanitaire du Cameroun avec une précision remarquable : visualisez en temps réel la répartition des hôpitaux, analysez les densités de population grâce aux données WorldPop 2025, et identifiez les zones prioritaires grâce à notre système de hiérarchie intelligent. La **fonction de recherche avancée** vous offre une navigation fluide - trouvez instantanément n'importe quelle localité ou hôpital, avec zoom automatique et popup informatif. Observez comment les grandes villes captent naturellement l'attention grâce à notre algorithme de priorité, tout en maintenant la visibilité des zones rurales. Chaque entité territoriale révèle sa distance au centre de santé le plus proche, transformant la planification sanitaire en une expérience visuelle intuitive et puissante. Il est également possible de déterminer à partir d'un outil développé, la périmètre et la surface d'un térritoire d'intérêt pour une éventuel étude ciblée.
+
+##  Sources de Données
+
+### Données Vectorielles
+- **Hôpitaux** : OSM2IGEO Cameroun (2023) - `PAI_SANTE.shp`
+- **Limites administratives** : GADM Cameroun Niveau 3 - `gadm41_CMR_3.shp`
+- **Entités territoriales** : OpenStreetMap - `gis_osm_places_free_1.shp`
+
+### Données Raster
+- **Population** : WorldPop 2025 - `cmr_pop_2025_CN_100m_R2024B_v1.tif`
+
+## Packages Principaux Utilisés
+
+### Cartographie & Spatial
+- `leaflet` - Cartes interactives
+- `sf` - Données vectorielles
+- `terra` - Données raster
+
+### Data Science
+- `dplyr` - Manipulation de données
+- `tidyr` - Nettoyage de données
+
+### Visualisation
+- `viridis` - Palettes de couleurs
+- `htmlwidgets` - Export HTML
+
+### Fonctionnalités Avancées
+- `leaflet.extras` - Outils supplémentaires Leaflet
+
+## Fonctionnalités Détaillées
+
+###  Analyse Spatiale
+- Extraction de la population par région (somme des pixels WorldPop)
+- Calcul des densités de population réelles
+- Détection de l'hôpital le plus proche pour chaque entité territoriale
+- Calcul des distances en kilomètres
+
+###  Données Hospitalières
+- Localisation précise des hôpitaux
+- Statistiques par région (nombre d'hôpitaux)
+- Informations détaillées : nom, région, département
+
+### 🏘️ Hiérarchie des Entités Territoriales
+- **Capitale Nationale** ️
+- **Ville Principale** 
+- **Ville Secondaire** ️
+- **Quartier Périphérique** 
+- **Village** 
+- **Localité** 
+- **Hameau** 
+
+###  Fonction de Recherche
+- **Recherche en temps réel** dans la barre en haut à gauche
+- **Support des deux groupes** : Hôpitaux et Entités Territoriales
+- **Zoom automatique** sur le résultat avec popup d'information
+- **Auto-complétion** pour une navigation rapide
+- **Interface intuitive** de type "search box"
+
+### Visualisation
+- Couleurs dégressives (rouge → vert) selon l'importance
+- Taille des points proportionnelle à l'importance
+- Clustering intelligent des marqueurs
+- Légendes interactives
+
+## ️ Rendu Final
+
+### Output : carte_couverture_reelle_cameroun.html
+- **Couches superposables** : Hôpitaux, Entités Territoriales, Régions
+- **Recherche avancée** avec auto-complétion
+- **Mesures** de distances et surfaces
+- **Infobulles détaillées** avec statistiques
+
+### Statistiques Globales
+- Population totale et superficie
+- Densité moyenne nationale
+- Nombre total d'hôpitaux et d'entités territoriales
+
+### Export
+- Fichier HTML autonome
+- Carte responsive et interactive
+
+##  Métriques Calculées
+
+### Par Région
+- Population totale
+- Superficie (km²)
+- Densité (hab/km²)
+- Nombre d'hôpitaux
+
+### Par Entité Territoriale
+- Type et nom
+- Hôpital le plus proche
+- Distance à l'hôpital (km)
+- Priorité hiérarchique
+
+## 🛠️ Utilisation
+
+1. **Prérequis** : Structure de dossiers `data/data2/` avec les fichiers sources
+2. **Exécution** : Lancer le script dans R/RStudio
+3. **Résultat** : Carte exportée dans `export_carte_complete/`
+
+## 💡 Points Forts
+
+- **Données réelles** WorldPop 2025
+- **Calcul précis** des densités par somme de pixels
+- **Hiérarchie intelligente** des entités
+- **Recherche puissante** et intuitive
+- **Interface utilisateur** riche et interactive
+- **Export autonome** sans dépendances externes
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# API Shiny : Analyse de Couverture Sanitaire du Cameroun
+
+**Script** : `API.R`  
+**Type** : Application Shiny Interactive  
+**Contexte** : Analyse spatiale des infrastructures de santé au Cameroun
+
+## Description
+
+Cette application Shiny offre une plateforme interactive pour analyser la répartition des hôpitaux et évaluer l'accessibilité aux soins de santé au Cameroun. Elle combine visualisation cartographique avancée et analyses statistiques en temps réel avec un **système de tampon modulable unique** qui révolutionne l'analyse de couverture sanitaire.
+
+## Fonctionnalités Principales
+
+Notre API vous permet d'explorer la couverture sanitaire avec une précision inédite grâce à son **tampon modulable en temps réel** de 0 à 100 km. Visualisez instantanément comment la zone d'influence d'un hôpital évolue selon la distance choisie : observez la population couverte passer de quelques milliers à des centaines de milliers d'habitants, et voyez les localités desservies se multiplier au fur et à mesure que vous étendez le rayon d'action. Cliquez sur n'importe quel hôpital et ajustez le slider pour découvrir **immédiatement** combien de personnes vivent dans sa zone d'influence actuelle et quelles localités il peut desservir. Cette interactivité sans précédent transforme la planification sanitaire en une expérience dynamique où chaque ajustement de distance révèle de nouvelles insights stratégiques.
+
+##  Le Tampon Modulable : Cœur de l'Application
+
+###  Fonctionnalité Unique
+- **Slider interactif** : 0 à 100 km
+- **Mise à jour en temps réel** : Les calculs s'ajustent instantanément
+- **Visualisation dynamique** : Les zones de tampon apparaissent/disparaissent selon la distance
+- **Analyses contextuelles** : Tous les rapports s'adaptent automatiquement
+
+###  Ce qui change avec le tampon
+| Distance | Impact sur l'Analyse |
+|----------|---------------------|
+| **0 km** | Aucun tampon - analyse individuelle de l'hôpital |
+| **5 km** | Couverture locale - villages proches |
+| **20 km** | Zone d'influence moyenne - plusieurs localités |
+| **50 km** | Couverture étendue - impact régional |
+| **100 km** | Influence maximale - analyse stratégique |
+
+###  Cas d'Usage du Tampon Modulable
+- **Planification urbaine** : Quel rayon couvre optimalement une ville ?
+- **Zones rurales** : Quelle distance est acceptable pour l'accès aux soins ?
+- **Urgences** : Quel hôpital peut intervenir rapidement ?
+- **Investissements** : Où construire pour maximiser la couverture ?
+
+##  Sources de Données
+
+### Données Vectorielles
+- **Hôpitaux** : OSM2IGEO Cameroun (2023) - `PAI_SANTE.shp`
+- **Limites administratives** : GADM Cameroun Niveau 3 - `gadm41_CMR_3.shp`
+- **Localités** : OpenStreetMap - `gis_osm_places_free_1.shp`
+
+### Données Raster
+- **Population** : WorldPop 2025 - `cmr_pop_2025_CN_100m_R2024B_v1.tif`
+
+## Architecture Technique
+
+### Backend (Server)
+- `shiny` - Framework d'application web
+- `sf` & `terra` - Traitement des données spatiales
+- `dplyr` & `tidyr` - Manipulation de données
+
+### Frontend (UI)
+- `leaflet` - Cartes interactives
+- `viridis` - Palettes de couleurs
+- CSS personnalisé - Interface utilisateur
+
+### Calculs Spatiaux
+- **Extraction de population** par somme de pixels WorldPop
+- **Calcul de distances** au plus proche hôpital
+- **Tampons dynamiques** autour des hôpitaux
+- **Filtrage spatial** des localités
+
+## Fonctionnalités Détaillées
+
+### ️ Visualisation Cartographique
+- **Carte Leaflet interactive** avec 4 couches superposées
+- **Régions administratives** colorées par densité de population
+- **Hôpitaux** en points rouges avec informations détaillées
+- **Localités** classées par type avec codes couleur
+- **Zones de tampon** dynamiques autour des hôpitaux
+
+###  Interactions Utilisateur
+
+#### Clic sur Hôpital 
+- Calcul **automatique** de la population dans la zone de tampon actuelle
+- Liste **dynamique** des localités desservies selon la distance choisie
+- Statistiques qui s'**actualisent** en temps réel avec le slider
+- Analyse de couverture qui **évolue** avec vos paramètres
+
+#### Clic sur Localité ️
+- Identification de l'hôpital le plus proche
+- Distance en kilomètres (vol d'oiseau)
+- Informations détaillées sur la localité
+
+#### Clic sur Région 
+- Statistiques démographiques régionales
+- Nombre d'hôpitaux dans la région
+- Informations contextuelles
+
+###  Paramètres d'Analyse
+- **Distance de tampon** : 0-100 km (slider interactif)
+- **Filtrage des localités** : 7 types disponibles
+- **Capitale nationale** incluse par défaut
+
+##  Calculs Spatiaux Avancés
+
+### Méthodologie de Calcul de Population
+L'application utilise les **données raster WorldPop 2025** (résolution 100m) pour calculer les populations avec une précision exceptionnelle :
+
+1. **Pour les régions** : Somme de tous les pixels dans les limites administratives
+2. **Pour les tampons** : Extraction en temps réel de la population dans les cercles autour des hôpitaux
+3. **Méthodes redondantes** : `mask()` + `global()` et `extract()` pour robustesse
+
+
+
+
