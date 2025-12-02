@@ -1,0 +1,34 @@
+SYNTHÈSE DES RÉSULTATS - ANALYSE DES SEUILS D'EAU
+============================================================
+
+SUPERFICIE ÉTHIOPIE: 113.14 millions d'hectares
+DONNÉES FAO (ARABLE): 15.0 millions d'hectares
+
+RÉSULTATS PAR SEUIL:
+----------------------------------------
+Seuil 75.0%:
+  • Eau: 0.6515 Mha (0.576%)
+  • Terres arables ls: 17.436 Mha
+  • Écart vs FAO: +16.238%
+
+Seuil 85.0%:
+  • Eau: 0.6253 Mha (0.553%)
+  • Terres arables ls: 17.440 Mha
+  • Écart vs FAO: +16.265%
+
+Seuil 90.0%:
+  • Eau: 0.6063 Mha (0.536%)
+  • Terres arables ls: 17.443 Mha
+  • Écart vs FAO: +16.285%
+
+Seuil 95.0%:
+  • Eau: 0.5765 Mha (0.510%)
+  • Terres arables ls: 17.447 Mha
+  • Écart vs FAO: +16.315%
+
+CONCLUSION:
+----------------------------------------
+Seuil optimal recommandé: 75%
+Terres arables ls: 17.436 Mha
+Écart avec données FAO: +16.238%
+→  légèrement supérieure aux données FAO
