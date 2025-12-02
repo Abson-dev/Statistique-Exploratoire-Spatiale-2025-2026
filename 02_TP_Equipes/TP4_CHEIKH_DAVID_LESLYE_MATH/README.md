@@ -200,6 +200,7 @@ TP4-SES/
 - Pourcentages par zone
 - Tri décroissant (zones les plus arables en premier)
 
+
 ### `logs/` (vérifications)
 - `01_alignement_spatial.txt` : résolution, CRS, dimensions de chaque couche
 
@@ -252,31 +253,6 @@ TP4-SES/
 
 ---
 
-##  Utilisation
-
-### Exécution :
-
-```bash
-# Étape 1 : Préparation spatiale
-python script/step1_preparation.py
-
-# Étape 2 : Masquages et calculs
-python script/step2_masking_stats.py
-```
-
-### Temps estimé :
-- Script 1 : ~5-10 minutes
-- Script 2 : ~15-20 minutes
-- **Total : ~30 minutes**
-
----
-
-## Résultats Attendus
-
-### Superficie totale des terres arables selon la FAO :
-- Éthiopie : **~15-16 millions d'hectares** (≈14-15% du territoire)
-- Territoire total : ~110 millions d'hectares
-
 ### Comparaison avec nos résultats :
 Les 3 scénarios permettent de valider quelle hypothèse d'eau se rapproche le plus des estimations officielles.
 
@@ -284,7 +260,7 @@ Les 3 scénarios permettent de valider quelle hypothèse d'eau se rapproche le p
 
 ## Citation
 
-Si vous utilisez ce code ou cette méthodologie, veuillez citer les sources de données originales :
+
 
 ```
 - Xiong, J., et al. (2017). GFSAD30: Global Food Security-support Analysis Data
@@ -303,5 +279,6 @@ Pour toute question ou amélioration, n'hésitez pas à ouvrir une issue sur Git
 ---
 
 ## Licence
+
 
 Ce projet est open source. Les données sources ont leurs propres licences respectives.
