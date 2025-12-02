@@ -1,0 +1,60 @@
+TP4 : EXPLICATIONS SUPPLEMENTAIRES AU README
+
+
+Membres du groupe
+
+DIOP Marème 
+
+SENOU Michel-Marie Trésor
+
+SECK Mouhameth
+
+RIRADJIM Ngarmoundou Trésor
+
+Ce TP a pour objectif de calculer les terres arables au KENYA.
+
+
+
+
+Pour les données, nous avons utilisé :
+
+- Limites administratives du KENYA GADM
+
+- Données sur les surfaces cultivées en 2015 avec GFSAD, celles ci sont téléchargées en 3 granules après on a eu recours au mosaic pour regrouper et couvrir le pays concerné délimité avec les limites pays de GADM. Le code a été fait sur R avec des lenteurs. L'autre approche était d'utiliser GEE puis réimporter.
+
+	Voici le code sur GEE
+
+	var t1 = ee.Image("projects/ee-mamesoda2807/assets/GFSAD30AFCE_2015_S10E30_001_2017261090100");
+	var t2 = ee.Image("projects/ee-mamesoda2807/assets/GFSAD30AFCE_2015_N00E30_001_2017261090100");
+	var t3 = ee.Image("projects/ee-mamesoda2807/assets/GFSAD30AFCE_2015_N00E30_001_2017261090100");
+	// Mosaic (fusion sans couture)
+	var gfsad = ee.ImageCollection([t1, t2, t3]).mosaic();
+
+	
+
+	Une limite qu'on a pu soulignée ici c'est qu'il ya une partie (sud est du Kenya non couverte par ce raster, mais on a corrigé ce fait en réalignant ce raster sur celui des forêts déboisées qui couvrait complètement le pays)
+
+
+
+- Forêts défrichées : elles ont été obtenues avec Hansen forestation en téléchargeant depuis GEE (voir code GEE pour l'extraction)
+le mosaic 2001 - 2015 a été considéré (comme les valeurs des pixels vont de 0 à 15 avec 0 = Non déboisée, 1 = déboisée en 2001, ..., 15 = déboisée en 2015). La structure du fichier nous permet de considérer toutes ces années et pas seulement une année comme 2015 seulement.
+
+- Pour les eaux permanentes nous les avons obtenues avec JRC Global Surface Water, la bande qui a été utilisée ici est seasonnality pour indiquer que si la surface est de l'eau 12 mois/ 12 c'est de l'eau permanente. Il ya bien d'autres bandes et qui pouvaient bien être prises.
+
+
+- Les surfaces imperméables sont obtenues avec Global Man Impervious Surface (GMIS), elles sont téléchargées via le site sauf qu'on les avait en UTM alors que le reste était en WGS84. Il fallait alors reprojeter. 
+
+- les pentes ont été obtenues avec DEM Copernicus GLO-30. Ensuite la pente a été calculée avec cette méthode : 
+
+	var slope_deg = ee.Terrain.slope(dem); // en degrés
+	var slope_pct = ee.Image(100).multiply(slope_deg.tan()); // pente en %
+
+Puis nous avons clippé sur les limites administratives du KENYA avant d'exporter vers Drive (voir script complet).
+
+
+- Les shapefiles des aires protégées  aussi ont été chargés pour le KENYA via World planet.
+
+Nous soulignons que pour tous les rasters téléchargés sont déjà en résolution 30 m et la plupart était projetée en WGS84 sauf le cas des surfaces imperméables. Certains rasters quand même ont été réalignés.
+
+
+
