@@ -2,6 +2,7 @@
 
 ##  Description Générale et Objectifs
 Ceci est une VERSION 2 DU PROJET
+
 Ce projet vise à **identifier et cartographier les terres arables en Éthiopie** à une résolution de 30 mètres, en combinant plusieurs sources de données satellite et en appliquant des filtres pour exclure les zones non cultivables.
 
 ### Objectifs principaux :
@@ -277,5 +278,6 @@ Pour toute question ou amélioration, n'hésitez pas à ouvrir une issue sur Git
 
 
 Ce projet est open source. Les données sources ont leurs propres licences respectives.
+
 
 
