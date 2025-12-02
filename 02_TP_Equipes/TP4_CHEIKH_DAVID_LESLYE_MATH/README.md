@@ -253,11 +253,6 @@ TP4-SES/
 
 ---
 
-### Comparaison avec nos résultats :
-Les 3 scénarios permettent de valider quelle hypothèse d'eau se rapproche le plus des estimations officielles.
-
----
-
 ## Citation
 
 
@@ -282,3 +277,4 @@ Pour toute question ou amélioration, n'hésitez pas à ouvrir une issue sur Git
 
 
 Ce projet est open source. Les données sources ont leurs propres licences respectives.
+
