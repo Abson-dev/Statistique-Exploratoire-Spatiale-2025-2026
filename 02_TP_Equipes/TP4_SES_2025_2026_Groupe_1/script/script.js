@@ -43,7 +43,7 @@ var communes = clip_and_style(ee.FeatureCollection(EE_GAUL_LEVEL2), 'AAAAAA', 1,
 
 // A. Terres Cultivées (GFSAD) → booléen
 var gfsad_image = ee.Image(GFSAD_ASSET_ID);
-var cropland_mask = gfsad_image.select(0).eq(1).clip(AOI_FC);
+var cropland_mask = gfsad_image.select(0).eq(2).clip(AOI_FC);
 Map.addLayer(cropland_mask.updateMask(cropland_mask), {palette: ['FF00FF']}, '4. Terres Cultivées (GFSAD)', false); 
 
 // B. Forêts Déboisées (Hansen LossYear 1-15, 2000-2015) → booléen
@@ -87,7 +87,7 @@ Map.addLayer(impervious_mask.updateMask(impervious_mask), {palette: ['808080']},
 
 
 // -------------------------------------------------------------------------------- //
-// *** 4. CALCUL DES TERRES ARABLES FINALES (Logique Corrigée 2.0) ***
+// *** 4. CALCUL DES TERRES ARABLES FINALES ***
 
 // ÉTAPE 1: Terres Arables de Base = Cultures OU Forêts déboisées
 var terres_arables_base = cropland_mask.unmask(0).or(cleared_forest_mask.unmask(0));
