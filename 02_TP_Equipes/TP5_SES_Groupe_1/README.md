@@ -64,7 +64,7 @@ TP4_SES_2025_2026_Groupe_1/
 
 
 ---
-#  Méthodologie d'analyse 
+# 4. Méthodologie d'analyse 
 
 
 L'analyse suit un processus de traitement géospatial en quatre étapes clés, entièrement automatisé dans Google Colab avec Python.
@@ -121,7 +121,7 @@ Plusieurs contrôles de qualité sont intégrés :
 2. Analyse de cohérence spatiale (valeurs aberrantes détectées visuellement)
 
 
-## 📈 Applications et Perspectives
+## Applications et Perspectives
 
 ### **Utilisation des résultats**
 
@@ -131,7 +131,7 @@ Les résultats fournissent une base quantitative pour :
 - Suivre les progrès vers l'ODD 11 (Villes et communautés durables)
 - Éclairer les décisions d'aménagement urbain et régional
 
-##️ Structure des Livrables
+# 5. Structure des Livrables
 
 ### **Données statistiques**
 - **Fichier CSV** : Tableau complet avec 31 lignes (régions) + 1 ligne (national) et 15 colonnes d'indicateurs
@@ -156,3 +156,4 @@ Les résultats fournissent une base quantitative pour :
   
   Lien : **`https://colab.research.google.com/drive/1VlwVUcH4loiOKWz_LHBvaocQQ5G1bQ5Y?usp=sharing`**
   
+
