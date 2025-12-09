@@ -1,4 +1,4 @@
-# TP5 de Statistique exploratoire spatiale : Analyse du ratio LCRPGR en Tanzanie entre 2017 et 2022
+# TP5 de statistique exploratoire spatiale : Analyse du ratio LCRPGR en Tanzanie entre 2017 et 2022
 
 ---
 
@@ -154,7 +154,8 @@ Les résultats fournissent une base quantitative pour :
 
   Le script complet, les représentations graphiques et la carte interactive sont disponibles sur Google Colab.
   
-  Lien : **`https://colab.research.google.com/drive/1VlwVUcH4loiOKWz_LHBvaocQQ5G1bQ5Y?usp=sharing`**
+  Lien : **https://colab.research.google.com/drive/1VlwVUcH4loiOKWz_LHBvaocQQ5G1bQ5Y?usp=sharing**
   
+
 
 
