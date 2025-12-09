@@ -45,7 +45,7 @@ project/
 **NB :**
 
 - Le dossier **data** qui contient l'ensemble des données que nous avons utilisé pour nos analyses.
-- Ce dossier est contenu dans un drive (le lien est le suivant : **https://drive.google.com/drive/folders/1QpaAfoaHITds5T_ced6_O-f7Id8oV3i3?usp=drive_link**) du fait de sa taille, qui excède la limite de GitHub. Cependant, vous pouvez les télécharger et les mettre dans le dossier pour exécuter les codes.
+- Ce dossier est contenu dans un drive (le lien est le suivant : **[https://drive.google.com/drive/folders/1QpaAfoaHITds5T_ced6_O-f7Id8oV3i3?usp=drive_link](https://drive.google.com/drive/folders/1QpaAfoaHITds5T_ced6_O-f7Id8oV3i3?usp=sharing\)**) du fait de sa taille, qui excède la limite de GitHub. Cependant, vous pouvez les télécharger et les mettre dans le dossier pour exécuter les codes.
 ---
 
 
@@ -385,6 +385,7 @@ Input Data → Preprocessing → Computation → Aggregation → Visualization
 6. **Line chart** : Pour les évolutions temporelles
 
 ---
+
 
 
 
