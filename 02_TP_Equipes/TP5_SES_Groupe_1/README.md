@@ -32,7 +32,7 @@ Ce projet vise à analyser l'indicateur ODD 11.3.1, également connu sous le nom
 | **ESRI Global Land Cover** | Surfaces Bâties (V) | 2017 & 2022 | Utilisé pour calculer la **Surface Bâtie** au début et à la fin de la période d'étude, essentielle pour le LCR. |
 | **WorldPop** | Population (Pop) | 2017 & 2022 | Utilisé pour obtenir les données de **Population** au début et à la fin de la période d'étude, essentielle pour le PGR. |
 
-**Lien vers les données brutes :** `https://drive.google.com/drive/folders/1KOZ4_Fz8F1fb8YbP-6AMJk3pwlhJpWDz?usp=sharing`
+**Lien vers les données brutes :**  https://drive.google.com/drive/folders/1KOZ4_Fz8F1fb8YbP-6AMJk3pwlhJpWDz?usp=sharing
 
 **Datation des données :**
 
@@ -156,4 +156,5 @@ Les résultats fournissent une base quantitative pour :
   
   Lien : **`https://colab.research.google.com/drive/1VlwVUcH4loiOKWz_LHBvaocQQ5G1bQ5Y?usp=sharing`**
   
+
 
