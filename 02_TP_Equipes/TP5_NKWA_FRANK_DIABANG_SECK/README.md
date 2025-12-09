@@ -17,7 +17,7 @@ Dans un contexte de croissance urbaine soutenue , il devient indispensable de su
   Classe : **ISE1 CL**
   Année académique : **2025–2026**
 
-**Encadrant :
+**Professeur :
 Mr. Hema Aboubacar, Analyste de recherche à IFPRI, data scientist**
 
 ---
@@ -190,4 +190,5 @@ TP5_Cameroun_LCRPGR/
 
 Projet académique — usage strictement pédagogique.
 Sources de données : Esri LandCover, WorldPop, GADM, UN-Habitat.
+
 
