@@ -58,13 +58,6 @@ project/
 5. [Architecture Technique](#5-architecture-technique)
 6. [Données et Sources](#6-données-et-sources)
 7. [Implémentation](#7-implémentation)
-8. [Résultats et Analyses](#8-résultats-et-analyses)
-9. [Guide d'Installation](#9-guide-dinstallation)
-10. [Guide d'Utilisation](#10-guide-dutilisation)
-11. [Limitations et Perspectives](#11-limitations-et-perspectives)
-12. [Contributions des Membres](#12-contributions-des-membres)
-13. [Références Bibliographiques](#13-références-bibliographiques)
-14. [Annexes](#14-annexes)
 
 ---
 
@@ -392,6 +385,7 @@ Input Data → Preprocessing → Computation → Aggregation → Visualization
 6. **Line chart** : Pour les évolutions temporelles
 
 ---
+
 
 
 
