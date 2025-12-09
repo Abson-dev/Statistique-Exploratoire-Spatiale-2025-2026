@@ -12,11 +12,13 @@ Dans un contexte de croissance urbaine soutenue , il devient indispensable de su
 * **Mouhamet Seck**
 * **David Ngueajio**
 * **Mamadou Lamine Diabang**
+
+  
   Classe : **ISE1 CL**
   Année académique : **2025–2026**
 
 **Encadrant :
-Mr. Hema Aboubacar**
+Mr. Hema Aboubacar, Analyste de recherche à IFPRI, data scientist**
 
 ---
 
@@ -100,37 +102,61 @@ Disponible dans `data/land_cover/`
 ## **6. Structure du projet**
 
 La structure complète du projet est la suivante :
-*(repris automatiquement depuis ton fichier)*
 
 ```
 TP5_Cameroun_LCRPGR/
 │
-├── data/                       
-│   ├── land_cover/              # Esri Land Cover 10m (2015 et 2020)
-│   ├── worldpop/                # Population 100m (2015 et 2020)
-│   ├── gadm/                    # Frontières administratives
-│   └── docu/                    # Documentation technique
+├── data/                                           # Toutes les données sources utilisées dans GEE
+│   │
+│   ├── land_cover/                                   # Tuiles Esri Land Cover 10m 
+│   │   ├── 32N_20170101-20180101.tif
+│   │   ├── 33N_20170101-20180101.tif
+│   │   ├── 33P_20170101-20180101.tif
+│   │   ├── 32N_20220101-20230101.tif
+│   │   ├── 33N_20220101-20230101.tif
+│   │   └── 33P_20220101-20230101.tif
+│   │
+│   ├── worldpop/                                   # Population 100m
+│   │   ├── cmr_pop_2015_CN_100m_R2025A_v1.tif
+│   │   └── cmr_pop_2020_CN_100m_R2025A_v1.tif
+│   │
+│   ├── gadm/                                       # Frontières administratives du Cameroun
+│   │   ├── gadm41_CMR_0.shp
+│   │   ├── gadm41_CMR_1.shp
+│   │   ├── gadm41_CMR_2.shp
+│   │   └── gadm41_CMR_3.shp
+│   │
+│   └── docu/                                       # Documents fournis par le professeur
+│       ├── KGZ_911_QGISstepbystepFinal_ENG_ESCAP.pdf
+│       ├── KGZ_1131_QGISstepbystepFinal_ENG_ESCAP.pdf
+│       ├── KGZ_Degurba_QGISstepbystep_ESCAP.pdf
+│       └── sdgi-2023-release-documentation.pdf
 │
-├── outputs/                     # Résultats exportés (csv, tif)
 │
-├── script.js                    # Script Google Earth Engine
+├── outputs/                                        # Sorties générées par GEE (export)
+│   ├── CMR_LCRPGR_regions_2015_2020.csv
+│   │
+│   ├── CMR_LCRPGR_500m_2015_2020.tif
+│   │
 │
-└── README.md                    # Ce document
+├── script.js                                       # Scripts Google Earth Engine    
+│
+└── README.md                                       # Description du projet, méthodologie et exécution
+
+
 ```
 
 
 
 ---
 
-## **7. Méthodologie (résumé)**
+## **7. Méthodologie**
 
-1. **Extraction des surfaces bâties** (2015 & 2020)
-   → Reclassification + calculs de surfaces bâties.
+1. **Extraction des surfaces bâties** (2015 & 2020) : Nous faisons ensuite un calcul de surfaces bâties.
 
 2. **Extraction des populations WorldPop**
-   → Intégration raster + somme pondérée par limite administrative.
 
-3. **Calcul du LCR et du PGR**
+3. **Calcul du LCR et du PGR**: A partir des formules
 
    * LCR = variation des surfaces bâties
    * PGR = variation de la population
@@ -140,7 +166,6 @@ TP5_Cameroun_LCRPGR/
 
    * Cameroun (national)
    * Régions (N1 GADM)
-   * étendre aux départements/arrondissements
 
 5. **Visualisation**
 
@@ -156,7 +181,7 @@ TP5_Cameroun_LCRPGR/
 
 1. Ouvrir `script.js` dans **Google Earth Engine**.
 2. Modifier le chemin d’export si nécessaire.
-3. Lancer les blocs successivement (extraction → calculs → exports).
+3. Lancer les blocs de code.
 4. Récupérer les fichiers générés dans `outputs/`.
 
 ---
@@ -165,3 +190,4 @@ TP5_Cameroun_LCRPGR/
 
 Projet académique — usage strictement pédagogique.
 Sources de données : Esri LandCover, WorldPop, GADM, UN-Habitat.
+
