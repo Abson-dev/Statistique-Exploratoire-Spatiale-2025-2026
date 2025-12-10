@@ -1,7 +1,9 @@
 /****************************************************
  * TP5 – LCRPGR Cameroun (SDG 11.3.1)
  * GHSL built-up + WorldPop + GADM1
- * 
+ * Avec labels de régions et infobulles interactives
+ ****************************************************/
+
 /*** ========= 0. PARAMÈTRES GLOBAUX ========= ***/
 
 // Période d'analyse : 2017–2022
@@ -10,16 +12,16 @@ var yearPresent = 2020;
 var T           = yearPresent - yearPast;   // 5 ans
 
 // Population WorldPop (tes assets)
-var POP_T1_ID = 'projects/stat-exploratoires-spatiales/assets/cmr_pop_2015_CN_100m_R2025A_v1';
-var POP_T2_ID = 'projects/stat-exploratoires-spatiales/assets/cmr_pop_2020_CN_100m_R2025A_v1';
+var POP_T1_ID = 'projects/stat-exploratoires-spatiales/assets/cmr_pop_2015_CN_1km_R2025A_UA_v1';
+var POP_T2_ID = 'projects/stat-exploratoires-spatiales/assets/cmr_pop_2020_CN_1km_R2025A_UA_v1';
 
 // GADM Cameroun
 var GADM0_ID = 'projects/stat-exploratoires-spatiales/assets/gadm41_CMR_0';
 var GADM1_ID = 'projects/stat-exploratoires-spatiales/assets/gadm41_CMR_1';
 
 // Échelles (un peu grossières pour alléger les calculs)
-var builtScale = 500;   // m – GHSL built-up (on agrège un peu)
-var popScale   = 500;   // m – WorldPop
+var builtScale = 100;   // m – GHSL built-up (on agrège un peu)
+var popScale   = 1000;   // m – WorldPop
 var outScale   = 1000;  // m – raster LCRPGR (résolution de sortie)
 
 // Géométries
@@ -49,6 +51,9 @@ var popPresent = ee.Image(POP_T2_ID).clip(country);
 function addLcrpgrStats(feature) {
   var geom = feature.geometry();
   var Tnum = ee.Number(T);
+  
+  // Calcul de la superficie de la région en km²
+  var areaKm2 = geom.area().divide(1e6);
 
   // ---- BÂTI : somme des surfaces bâties (m²) ----
   var Vpast_m2 = ee.Number(
@@ -73,6 +78,9 @@ function addLcrpgrStats(feature) {
 
   var Vpast_km2 = Vpast_m2.divide(1e6);
   var Vpres_km2 = Vpres_m2.divide(1e6);
+  
+  // Pourcentage de terre bâtie par rapport à la superficie totale
+  var builtPercentage = Vpres_km2.divide(areaKm2).multiply(100);
 
   // ---- POPULATION : somme de la population ----
   var popPastTot = ee.Number(
@@ -113,14 +121,15 @@ function addLcrpgrStats(feature) {
     'Pop_pres'  : popPresTot,
     'LCR'       : LCR,
     'PGR'       : PGR,
-    'LCRPGR'    : ratio
+    'LCRPGR'    : ratio,
+    'Area_km2'  : areaKm2,
+    'Built_pct' : builtPercentage
   });
 }
 
 /*** ========= 3. APPLICATION AUX RÉGIONS ========= ***/
 
 var regionsStats = regions.map(addLcrpgrStats);
-// On ne fait plus de gros reduceColumns direct, juste un aperçu léger
 print('Exemple région + stats :', regionsStats.first());
 
 /*** ========= 4. RASTER LCRPGR + LÉGENDE ========= ***/
@@ -140,7 +149,105 @@ var vis = {
 
 Map.addLayer(lcrpgrImg, vis, 'LCRPGR 2015–2020 (GADM1)');
 
-// 4.3. Légende simple
+// 4.3. Créer une couche vectorielle stylisée avec les noms
+var styled = regionsStats.map(function(feature) {
+  return feature.set('style', {
+    color: '000000',
+    width: 2,
+    fillColor: '00000000'  // Transparent
+  });
+});
+
+// Ajouter la couche avec les contours
+var vectorLayer = styled.style({
+  styleProperty: 'style',
+  neighborhood: 8
+});
+
+Map.addLayer(vectorLayer, {}, 'Contours des régions', true);
+
+// 4.4. Ajouter les labels des régions directement sur la couche
+var labels = regionsStats.map(function(feature) {
+  var centroid = feature.geometry().centroid(100);
+  var name = feature.get('NAME_1');
+  return ee.Feature(centroid).set('label', name);
+});
+
+// Fonction pour créer le texte des labels
+var textLayer = labels.map(function(f) {
+  return f.set('style', {
+    fontSize: 11,
+    textColor: 'FFFFFF',
+    outlineColor: '000000',
+    outlineWidth: 2
+  });
+});
+
+// Note: GEE ne supporte pas bien l'affichage de texte, donc on va utiliser
+// une approche avec inspection au clic
+
+// 4.5. Panel d'information persistant
+var infoPanel = ui.Panel({
+  style: {
+    position: 'bottom-right',
+    padding: '10px',
+    width: '300px'
+  }
+});
+
+var infoTitle = ui.Label({
+  value: 'ℹ️ Information région',
+  style: {
+    fontWeight: 'bold',
+    fontSize: '14px',
+    margin: '0 0 8px 0'
+  }
+});
+
+var infoContent = ui.Label({
+  value: 'Cliquez sur une région pour voir les détails',
+  style: {
+    fontSize: '12px',
+    whiteSpace: 'pre'
+  }
+});
+
+infoPanel.add(infoTitle);
+infoPanel.add(infoContent);
+Map.add(infoPanel);
+
+// 4.6. Configuration du clic sur la carte
+Map.style().set('cursor', 'crosshair');
+
+Map.onClick(function(coords) {
+  var point = ee.Geometry.Point([coords.lon, coords.lat]);
+  
+  var regionClicked = regionsStats.filterBounds(point).first();
+  
+  regionClicked.evaluate(function(feature) {
+    if (!feature) {
+      infoContent.setValue('Aucune région trouvée.\nCliquez sur une région du Cameroun.');
+      return;
+    }
+    
+    var props = feature.properties;
+    
+    // Formater les informations
+    var text = '+ ' + props.NAME_1 + '\n\n' +
+               '+ Superficie: ' + props.Area_km2.toFixed(0) + ' km²\n' +
+               '+ Population (2020): ' + props.Pop_pres.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + '\n' +
+               '+ Ratio LCRPGR: ' + props.LCRPGR.toFixed(3) + '\n' +
+               '+ Terre bâtie: ' + props.Built_pct.toFixed(2) + '%\n' +
+               '+ Surface bâtie 2020: ' + props.Vpres_km2.toFixed(2) + ' km²';
+    
+    infoContent.setValue(text);
+    
+    // Optionnel: zoom sur la région
+    // Map.centerObject(ee.Feature(feature).geometry(), 8);
+  });
+});
+
+// 4.6. Légende simple
 var legend = ui.Panel({
   style: {
     position: 'bottom-left',
@@ -152,6 +259,12 @@ legend.add(ui.Label('LCRPGR 2015–2020', {
   fontWeight: 'bold',
   fontSize: '13px',
   margin: '0 0 4px 0'
+}));
+
+legend.add(ui.Label('(Cliquez sur une région pour infos)', {
+  fontSize: '10px',
+  fontStyle: 'italic',
+  margin: '0 0 8px 0'
 }));
 
 var legendEntries = [
@@ -203,31 +316,22 @@ Export.image.toDrive({
 });
 
 /*** ========= 6. STATISTIQUES GLOBALES + HISTOGRAMME (CÔTÉ CLIENT) ========= ***/
-/*
-  Pour éviter "Too many concurrent aggregations", on récupère une fois
-  la FeatureCollection complète côté client avec evaluate(), puis on calcule
-  les stats (min, max, moyenne, écart-type) et on construit le chart
-  en JavaScript pur.
-*/
 
 regionsStats.evaluate(function(fc) {
-  // fc = objet JSON côté client
   var feats = fc.features;
   if (!feats || feats.length === 0) {
     print('Aucune région trouvée.');
     return;
   }
 
-  // Récupérer les noms de régions et les LCRPGR
   var names = [];
   var values = [];
   feats.forEach(function(f) {
     var props = f.properties;
-    names.push(props.NAME_1);          // adapter si le champ porte un autre nom
+    names.push(props.NAME_1);
     values.push(props.LCRPGR);
   });
 
-  // Calculs stats simples côté client
   var n = values.length;
   var min = Math.min.apply(null, values);
   var max = Math.max.apply(null, values);
@@ -247,7 +351,6 @@ regionsStats.evaluate(function(fc) {
     stdDev: std
   });
 
-  // Construire une DataTable pour le chart (API Google Viz)
   var dataTable = {
     cols: [
       {id: 'region', label: 'Région', type: 'string'},
