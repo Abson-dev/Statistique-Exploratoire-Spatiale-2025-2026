@@ -136,8 +136,8 @@ TP5_Cameroun_LCRPGR/
 ├── outputs/                                        # Sorties générées par GEE (export)
 │   ├── CMR_LCRPGR_regions_2015_2020.csv
 │   │
-│   ├── CMR_LCRPGR_500m_2015_2020.tif
-│   │
+│   └── CMR_LCRPGR_500m_2015_2020.tif
+│   
 │
 ├── script.js                                       # Scripts Google Earth Engine    
 │
@@ -184,11 +184,14 @@ TP5_Cameroun_LCRPGR/
 3. Lancer les blocs de code.
 4. Récupérer les fichiers générés dans `outputs/`.
 
+**Le mail du professeur a déja été ajouté au projet, voici le lien vers GEE** : https://code.earthengine.google.com/85ecb9036b0965084ff98a05ea483f1d
+
 ---
 
 ## **9. Licence**
 
 Projet académique — usage strictement pédagogique.
 Sources de données : Esri LandCover, WorldPop, GADM, UN-Habitat.
+
 
 
