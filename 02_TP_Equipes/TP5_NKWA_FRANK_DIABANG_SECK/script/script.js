@@ -90,7 +90,7 @@ function addLcrpgrStats(feature) {
       scale: popScale,
       maxPixels: 1e13,
       tileScale: 4
-    }).values().get(0)          // première bande (peu importe son nom)
+    }).values().get(0)          // 
   );
 
   var popPresTot = ee.Number(
@@ -242,7 +242,7 @@ Map.onClick(function(coords) {
     
     infoContent.setValue(text);
     
-    // Optionnel: zoom sur la région
+
     // Map.centerObject(ee.Feature(feature).geometry(), 8);
   });
 });
@@ -315,7 +315,7 @@ Export.image.toDrive({
   maxPixels: 1e13
 });
 
-/*** ========= 6. STATISTIQUES GLOBALES + HISTOGRAMME (CÔTÉ CLIENT) ========= ***/
+/*** ========= 6. STATISTIQUES GLOBALES + HISTOGRAMME  ========= ***/
 
 regionsStats.evaluate(function(fc) {
   var feats = fc.features;
@@ -371,3 +371,4 @@ regionsStats.evaluate(function(fc) {
 
   print(chart);
 });
+
