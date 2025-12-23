@@ -1,5 +1,5 @@
 # README - Travail Pratique N°6
-Calcul d'indices spectraux avec le code editor de l'API JavaScript de la plateforme Google Earth Engine.
+Calcul d'indices spectraux avec l'API JavaScript de la plateforme Google Earth Engine.
 
 ## 1. Vue d’ensemble
 
