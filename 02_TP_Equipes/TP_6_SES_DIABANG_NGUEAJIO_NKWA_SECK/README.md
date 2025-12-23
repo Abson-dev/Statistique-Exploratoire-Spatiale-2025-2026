@@ -3,8 +3,7 @@ Calcul d'indices spectraux avec l'API JavaScript de la plateforme Google Earth E
 
 ## 1. Vue d’ensemble
 
-Au cours de ce travail pratique, il était question pour nous d'écrire des scripts permettant le calcul d'indice spectraux pour le Burkina Faso à partir d'images satellitaires.
-La granularité attendue correspondait au niveau départemental
+Ce TP vise à calculer les valeurs que prennent certains indices spectraux, à différentes échelles administratives du Burkina-Faso.
 
 ## 2. Structure du dépôt
 
