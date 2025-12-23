@@ -60,24 +60,9 @@ TP_SIX_DIABANG_NKWA_SECK_NGUEAJIO_ISE1CL_2025/
 - **Limites administratives** : FAO GAUL 2015 (niveau 2 - departements)
 
 ### Pre-traitements
-- Masquage des nuages via Scene Classification Layer (SCL)
-- Filtrage : couverture nuageuse < 20%
-
-### Bandes spectrales utilisees
-- B2 : Bleu (490 nm)
-- B3 : Vert (560 nm)
-- B4 : Rouge (665 nm)
-- B8 : Proche infrarouge (842 nm)
-- B11 : SWIR 1 (1610 nm)
-- B12 : SWIR 2 (2190 nm)
+- Masquage des nuages via Scene Classification Layer (SCL), etc
 
 ## Utilisation
-
-### Prerequisites
-- Compte Google Earth Engine actif
-- Acces a l'editeur de code GEE : https://code.earthengine.google.com
-
-### Execution des scripts
 
 1. Ouvrir l'editeur Google Earth Engine
 2. Copier le contenu d'un script du dossier `scripts/`
@@ -89,4 +74,5 @@ TP_SIX_DIABANG_NKWA_SECK_NGUEAJIO_ISE1CL_2025/
 ## Licence
 
 Ce projet est libre d'utilisation a des fins academiques uniquement.
+
 
