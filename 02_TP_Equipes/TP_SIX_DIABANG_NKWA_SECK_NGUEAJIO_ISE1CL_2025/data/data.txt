@@ -1,0 +1,2 @@
+Les limites administratives utilisées dans cette étude proviennent de la base de données FAO GAUL (Global Administrative Unit Layers) sur Google Earth Engine.
+Par ailleurs, les données EHCVM ont été extraites de la base de la Banque mondiale, accessible via la plateforme microdata.worldbank.org.

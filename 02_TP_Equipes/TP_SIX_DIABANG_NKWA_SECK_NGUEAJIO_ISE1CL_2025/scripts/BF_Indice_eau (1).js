@@ -1,0 +1,402 @@
+// == == == == == == == == == == == == == == == == == == == ==
+// ANALYSE
+BURKINA
+FASO -
+// == == == == == == == == == == == == == == == == == == == ==
+
+var
+burkinaFaso = ee.FeatureCollection("FAO/GAUL/2015/level2")
+.filter(ee.Filter.eq('ADM0_NAME', 'Burkina Faso'));
+
+Map.centerObject(burkinaFaso, 7);
+
+var
+annee = 2024;
+
+// CRÉER
+LES
+COMPOSITES
+function
+creerComposite(dateDebut, dateFin)
+{
+return ee.ImageCollection('COPERNICUS/S2_SR')
+.filterBounds(burkinaFaso)
+.filterDate(dateDebut, dateFin)
+.filter(ee.Filter.lt('CLOUDY_PIXEL_PERCENTAGE', 30))
+.select(['B3', 'B4', 'B8', 'B11'])
+.median()
+.clip(burkinaFaso);
+}
+
+var
+compositePluies = creerComposite(annee + '-06-01', annee + '-10-31');
+var
+compositeSeche = creerComposite(annee - 1 + '-11-01', annee + '-05-31');
+
+// CALCULER
+LES
+INDICES
+function
+calculerIndicesEau(image)
+{
+var
+mndwi = image.normalizedDifference(['B3', 'B11']).rename('MNDWI');
+var
+ndwi = image.normalizedDifference(['B3', 'B8']).rename('NDWI');
+var
+ndmi = image.normalizedDifference(['B8', 'B11']).rename('NDMI');
+return image.addBands([mndwi, ndwi, ndmi]);
+}
+
+var
+indicesPluies = calculerIndicesEau(compositePluies);
+var
+indicesSeche = calculerIndicesEau(compositeSeche);
+
+// == == == == == == == == == == == == == == == == == == == == == == =
+// VISUALISATION
+ADAPTÉE
+AU
+CONTEXTE
+SAHÉLIEN
+// == == == == == == == == == == == == == == == == == == == == == == =
+
+// Palette
+optimisée
+pour
+le
+Burkina
+Faso
+var
+paletteBF = [
+'8B4513', // Marron
+foncé: sols
+très
+secs
+'D2691E', // Marron
+clair: sols
+secs
+'F4A460', // Sable: sols
+peu
+humides
+'FFFF99', // Jaune
+pâle: transition
+'CCFF99', // Vert
+très
+clair: humidité
+faible
+'66FF66', // Vert
+clair: zones
+humides
+'00CCFF', // Cyan: eau
+peu
+profonde
+'0066FF' // Bleu: eau
+profonde
+];
+
+// SEUILS
+ADAPTÉS
+au
+Sahel(pas - 0.5
+à + 0.5
+mais - 0.6
+à + 0.2)
+var
+visParamsPluies = {
+min: -0.6, // Capture
+les
+sols
+très
+secs
+max: 0.2, // La
+plupart
+de
+l
+'eau au BF est < 0.2
+palette: paletteBF
+};
+
+var
+visParamsSeche = {
+min: -0.7, // Encore
+plus
+sec
+en
+saison
+sèche
+max: 0.1, // Très
+peu
+d
+'eau
+palette: paletteBF
+};
+
+Map.addLayer(indicesPluies.select('MNDWI'), visParamsPluies, 'MNDWI - Saison Pluies');
+Map.addLayer(indicesSeche.select('MNDWI'), visParamsSeche, 'MNDWI - Saison Sèche', false);
+
+// MASQUE
+POUR
+IDENTIFIER
+UNIQUEMENT
+L
+'EAU
+// Au
+Burkina
+Faso, MNDWI > -0.1
+est
+un
+seuil
+plus
+réaliste
+que > 0
+var
+seuilEauBF = -0.1; // Ajusté
+pour
+contexte
+aride
+var
+masqueEauPluies = indicesPluies.select('MNDWI').gt(seuilEauBF);
+var
+masqueEauSeche = indicesSeche.select('MNDWI').gt(seuilEauBF);
+
+Map.addLayer(masqueEauPluies.selfMask(), {palette: ['blue']}, 'Eau détectée - Pluies');
+Map.addLayer(masqueEauSeche.selfMask(), {palette: ['red']}, 'Eau détectée - Sèche', false);
+
+// VISUALISATION
+RGB
+POUR
+CONTEXTE
+Map.addLayer(compositePluies, {bands: ['B4', 'B3', 'B3'], min: 0, max: 2500}, 'RGB - Pluies', false);
+
+// == == == == == == == == == == == == == == == == == == == == == == =
+// EXTRACTION
+STATISTIQUES
+PAR
+DÉPARTEMENT
+// == == == == == == == == == == == == == == == == == == == == == == =
+
+function
+extraireStatistiques(image, nomPeriode)
+{
+var
+stats = image.select(['MNDWI', 'NDWI', 'NDMI'])
+.reduceRegions({
+    collection: burkinaFaso,
+    reducer: ee.Reducer.mean()
+    .combine(ee.Reducer.stdDev(), '', true)
+    .combine(ee.Reducer.min(), '', true)
+    .combine(ee.Reducer.max(), '', true)
+    .combine(ee.Reducer.median(), '', true),
+    scale: 100,
+    tileScale: 8
+});
+
+return stats.map(function(feature)
+{
+return feature.set('Periode', nomPeriode).set('Annee', annee);
+});
+}
+
+function
+calculerSurfaceEau(image, nomPeriode, seuil)
+{
+    var
+masqueEau = image.select('MNDWI').gt(seuil);
+var
+surfaceEau = masqueEau.multiply(ee.Image.pixelArea()).divide(1e6);
+
+var
+statsEau = surfaceEau.reduceRegions({
+collection: burkinaFaso,
+reducer: ee.Reducer.sum(),
+scale: 100,
+tileScale: 8
+});
+
+return statsEau.map(function(feature)
+{
+return feature
+.select(['ADM0_NAME', 'ADM1_NAME', 'ADM2_NAME', 'sum'],
+        ['ADM0_NAME', 'ADM1_NAME', 'ADM2_NAME', 'Surface_Eau_km2'])
+.set('Periode', nomPeriode)
+.set('Annee', annee)
+.set('Seuil_MNDWI', seuil);
+});
+}
+
+var
+statsPluies = extraireStatistiques(indicesPluies, 'Saison_Pluies');
+var
+statsSeche = extraireStatistiques(indicesSeche, 'Saison_Seche');
+
+var
+surfaceEauPluies = calculerSurfaceEau(indicesPluies, 'Saison_Pluies', seuilEauBF);
+var
+surfaceEauSeche = calculerSurfaceEau(indicesSeche, 'Saison_Seche', seuilEauBF);
+
+var
+toutesStats = statsPluies.merge(statsSeche);
+var
+toutesSurfacesEau = surfaceEauPluies.merge(surfaceEauSeche);
+
+print('Aperçu statistiques:', toutesStats.limit(3));
+print('Aperçu surfaces eau:', toutesSurfacesEau.limit(3));
+
+// == == == == == == == == == == == == == == == == == == == == == == =
+// CARTE
+CHOROPLÈTHE
+PAR
+DÉPARTEMENT
+// == == == == == == == == == == == == == == == == == == == == == == =
+
+var
+mndwiParDept = indicesPluies.select('MNDWI').reduceRegions({
+    collection: burkinaFaso,
+    reducer: ee.Reducer.mean(),
+    scale: 100,
+    tileScale: 8
+}).filter(ee.Filter.notNull(['mean']));
+
+var
+empty = ee.Image().byte();
+var
+mndwiViz = empty.paint({
+    featureCollection: mndwiParDept,
+    color: 'mean'
+});
+
+// Visualisation
+avec
+seuils
+adaptés
+Map.addLayer(mndwiViz, {
+    min: -0.45, // Ajusté
+selon
+tes
+données
+max: -0.15, // Capture
+la
+variabilité
+entre
+départements
+palette: ['8B0000', 'FF6347', 'FFA500', 'FFFF00', '90EE90', '00CED1']
+}, 'MNDWI Moyen par Département');
+
+Map.addLayer(burkinaFaso.style({color: '000000', fillColor: '00000000', width: 1.5}),
+             {}, 'Limites Départements');
+
+// == == == == == == == == == == == == == == == == == == == == == == =
+// COMPARAISON
+SAISON
+PLUIES
+VS
+SÈCHE
+// == == == == == == == == == == == == == == == == == == == == == == =
+
+var
+difference = indicesPluies.select('MNDWI') \
+    .subtract(indicesSeche.select('MNDWI')) \
+    .rename('Difference_MNDWI');
+
+Map.addLayer(difference, {
+    min: -0.1,
+    max: 0.3,
+    palette: ['red', 'white', 'blue']
+}, 'Différence (Pluies - Sèche)', false);
+
+// == == == == == == == == == == == == == == == == == == == == == == =
+// EXPORTS
+   // == == == == == == == == == == == == == == == == == == == == == == =
+
+// 1.
+STATISTIQUES
+PAR
+DÉPARTEMENT
+ET
+PAR
+SAISON
+Export.table.toDrive({
+    collection: toutesStats,
+    description: 'BF_Indices_Eau_Stats_' + annee,
+    fileFormat: 'CSV',
+    selectors: [
+'ADM1_NAME', // Province
+'ADM2_NAME', // Département
+'Periode', // Saison_Pluies
+ou
+Saison_Seche
+'Annee', // 2024
+'MNDWI_mean', // Moyenne
+MNDWI
+'MNDWI_stdDev', // Écart - type
+'MNDWI_min', // Minimum
+'MNDWI_max', // Maximum
+'MNDWI_median', // Médiane
+'NDWI_mean', // Moyenne
+NDWI
+'NDWI_stdDev',
+'NDMI_mean', // Moyenne
+NDMI
+'NDMI_stdDev'
+]
+});
+
+// 2.
+SURFACE
+EN
+EAU
+PAR
+DÉPARTEMENT
+Export.table.toDrive({
+    collection: toutesSurfacesEau,
+    description: 'BF_Surface_Eau_' + annee,
+    fileFormat: 'CSV',
+    selectors: [
+'ADM1_NAME',
+'ADM2_NAME',
+'Periode',
+'Annee',
+'Surface_Eau_km2',
+'Seuil_MNDWI'
+]
+});
+
+// 3.
+COMPARAISON
+PLUIES
+VS
+SÈCHE(1
+ligne
+par
+département)
+var
+comparaisonDept = statsPluies.map(function(featurePluies)
+{
+    var
+nomDept = featurePluies.get('ADM2_NAME');
+var
+featureSeche = statsSeche.filter(ee.Filter.eq('ADM2_NAME', nomDept)).first();
+
+return ee.Feature(null, {
+    'Province': featurePluies.get('ADM1_NAME'),
+    'Departement': nomDept,
+    'Annee': annee,
+    'MNDWI_Saison_Pluies': featurePluies.get('MNDWI_mean'),
+    'MNDWI_Saison_Seche': featureSeche.get('MNDWI_mean'),
+    'MNDWI_Variation': ee.Number(featurePluies.get('MNDWI_mean'))
+                  .subtract(ee.Number(featureSeche.get('MNDWI_mean'))),
+    'NDWI_Saison_Pluies': featurePluies.get('NDWI_mean'),
+    'NDWI_Saison_Seche': featureSeche.get('NDWI_mean'),
+    'NDMI_Saison_Pluies': featurePluies.get('NDMI_mean'),
+    'NDMI_Saison_Seche': featureSeche.get('NDMI_mean')
+});
+});
+
+Export.table.toDrive({
+collection: comparaisonDept,
+description: 'BF_Comparaison_Pluies_Seche_' + annee,
+fileFormat: 'CSV'
+});
+
+print('✓ 3 fichiers nettoyés prêts dans Tasks (sans métadonnées)');
