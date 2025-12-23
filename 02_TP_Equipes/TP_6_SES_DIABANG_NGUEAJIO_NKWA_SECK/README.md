@@ -41,25 +41,6 @@ NDBI	(SWIR − NIR) / (SWIR + NIR)	Zones bâties	Urbanisation
 etc
 
 ### 5. Méthodologie
-
-Étapes principales : 
-- Import des données
-- Sélection et filtrage des images (nuages, dates)
-
-Calcul des indices spectraux
-
-Analyse de la distribution (avant agrégation)
-
-Agrégation spatiale :
-
-Niveau national
-
-Niveau régional
-
-Niveau départemental
-
-Export des résultats pour analyse ultérieure (R / Stata)
-
 - Principe clé :
 Aucune agrégation n’est réalisée sans inspection préalable de la distribution.
 
@@ -75,16 +56,12 @@ Les indices sont des proxys, pas des mesures directes
 ### 9. Perspectives
 
 ### 10. Auteur & Contact
-
 Auteurs : 
 - Lamine DIABANG
 - David NGUEAJIO
 - Leslye NKWA
 - Mouhammet SECK
-- 
 
-Elèves en ISE1 - Cycle Long
-Institution : ENSAE Dakar
-11. Licence
-
-Préciser la licence (MIT, CC-BY, usage académique uniquement, etc.)
+*Elèves en ISE1 - Cycle Long*
+**Institution : ENSAE Dakar**
+**ANNEE ACADEMIQUE: 2025/2026**
