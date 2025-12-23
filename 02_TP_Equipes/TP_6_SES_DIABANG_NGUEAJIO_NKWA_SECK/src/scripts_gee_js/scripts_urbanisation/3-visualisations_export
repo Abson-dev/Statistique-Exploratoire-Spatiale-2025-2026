@@ -1,0 +1,287 @@
+/**** Start of imports. If edited, may not auto-convert in the playground. ****/
+var bfa_border = ee.FeatureCollection("projects/ses-tp-spectral-index/assets/gadm41_BFA_0"),
+    bfa_region = ee.FeatureCollection("projects/ses-tp-spectral-index/assets/gadm41_BFA_1"),
+    bfa_dpt = ee.FeatureCollection("projects/ses-tp-spectral-index/assets/gadm41_BFA_2");
+/***** End of imports. If edited, may not auto-convert in the playground. *****/
+/*
+=============================================================================
+Script de Visualisation des Indices Spectraux d'Urbanisation
+Burkina Faso - Année de référence 2022
+=============================================================================
+Auteur: David NGUEAJIO - ENSAE Dakar
+Objectif: Visualisations cartographiques des indices d'urbanisations
+PARTIE 3/3
+*/
+
+// =============================================================================
+// CONFIGURATION
+// =============================================================================
+
+var CONFIG = {
+  echelle: 100,
+  anneeCible: 2022
+};
+
+var PALETTES = {
+  urbanisation: ['#2166ac','#4393c3','#92c5de','#d1e5f0','#fddbc7','#f4a582','#d6604d','#b2182b'],
+  vegetation: ['#8e0152','#c51b7d','#de77ae','#f1b6da','#fde0ef','#e6f5d0','#b8e186','#7fbc41','#4d9221','#276419'],
+  eau: ['#543005','#8c510a','#bf812d','#dfc27d','#f6e8c3','#c7eae5','#80cdc1','#35978f','#01665e','#003c30'],
+  divergente: ['#d73027','#f46d43','#fdae61','#fee090','#e0f3f8','#abd9e9','#74add1','#4575b4']
+};
+
+// =============================================================================
+// CHARGEMENT DES DONNÉES DES PARTIES PRÉCÉDENTES
+// =============================================================================
+
+print('═══════════════════════════════════════════════════════════');
+print('CHARGEMENT DES DONNÉES');
+print('═══════════════════════════════════════════════════════════');
+
+// Chargement des indices (Partie 1)
+var indicesUrbanisation = ee.Image('projects/ses-tp-spectral-index/assets/BFA_Indices_Urbanisation_Asset_' + CONFIG.anneeCible);
+
+// Chargement des statistiques (Partie 2)
+var statsRegionsNDBI = ee.FeatureCollection('projects/ses-tp-spectral-index/assets/BFA_Stats_Regions_NDBI_Asset_' + CONFIG.anneeCible);
+var statsRegionsIBI = ee.FeatureCollection('projects/ses-tp-spectral-index/assets/Stats_Regions_IBI_' + CONFIG.anneeCible);
+var statsDepartements = ee.FeatureCollection('projects/ses-tp-spectral-index/assets/Stats_Dept_NDBI_' + CONFIG.anneeCible);
+
+// Extraction des bandes individuelles
+var ndbi = indicesUrbanisation.select('NDBI');
+var ibi = indicesUrbanisation.select('IBI');
+var urban_index = indicesUrbanisation.select('UI');
+var ndvi = indicesUrbanisation.select('NDVI');
+var mndwi = indicesUrbanisation.select('MNDWI');
+
+// Chargement du composite Sentinel-2
+var s2Median = ee.ImageCollection('COPERNICUS/S2_SR_HARMONIZED')
+  .filterBounds(bfa_border)
+  .filterDate('2022-01-01', '2022-12-31')
+  .filter(ee.Filter.lt('CLOUDY_PIXEL_PERCENTAGE', 20))
+  .median()
+  .clip(bfa_border);
+
+print('✓ Toutes les données chargées avec succès');
+print('═══════════════════════════════════════════════════════════');
+
+
+// =============================================================================
+// SECTION 10: VISUALISATIONS CARTOGRAPHIQUES
+// =============================================================================
+
+print('═══════════════════════════════════════════════════════════');
+print('VISUALISATIONS CARTOGRAPHIQUES');
+print('═══════════════════════════════════════════════════════════');
+
+// Centrage de la carte sur le Burkina Faso
+Map.centerObject(bfa_border, 7);
+
+// Limites administratives
+var styleFrontiere = bfa_border.style({
+  color: '000000',
+  width: 3,
+  fillColor: '00000000'
+});
+
+var styleRegions = bfa_region.style({
+  color: '2c3e50',
+  width: 2,
+  fillColor: '00000000'
+});
+
+var styleDepartements = bfa_dpt.style({
+  color: '95a5a6',
+  width: 0.8,
+  fillColor: '00000000'
+});
+
+// Ajout des couches administratives
+Map.addLayer(styleFrontiere, {}, 'Frontière Nationale', true, 1);
+Map.addLayer(styleRegions, {}, 'Régions', true, 0.9);
+Map.addLayer(styleDepartements, {}, 'Départements', false, 0.7);
+
+// Composite RGB naturel
+Map.addLayer(s2Median, {
+  bands: ['B4', 'B3', 'B2'],
+  min: 0,
+  max: 3000,
+  gamma: 1.4
+}, 'Couleurs Naturelles', false);
+
+// Composite fausses couleurs (végétation)
+Map.addLayer(s2Median, {
+  bands: ['B8', 'B4', 'B3'],
+  min: 0,
+  max: 3000,
+  gamma: 1.4
+}, 'Fausses Couleurs (NIR-R-G)', false);
+
+// NDBI - Zones bâties
+Map.addLayer(ndbi, {
+  min: -0.4,
+  max: 0.4,
+  palette: PALETTES.urbanisation
+}, 'NDBI - Zones Bâties', true);
+
+// IBI - Indice d'urbanisation composite
+Map.addLayer(ibi, {
+  min: -0.5,
+  max: 0.5,
+  palette: PALETTES.divergente
+}, 'IBI - Indice Composite', true);
+
+// UI - Urban Index
+Map.addLayer(urban_index, {
+  min: 0,
+  max: 2,
+  palette: ['#ffffcc','#ffeda0','#fed976','#feb24c','#fd8d3c','#fc4e2a','#e31a1c','#bd0026','#800026']
+}, 'UI - Urban Index', false);
+
+// NDVI - Végétation
+Map.addLayer(ndvi, {
+  min: -0.2,
+  max: 0.8,
+  palette: PALETTES.vegetation
+}, 'NDVI - Végétation', false);
+
+// MNDWI - Surfaces en eau
+Map.addLayer(mndwi, {
+  min: -0.5,
+  max: 0.5,
+  palette: PALETTES.eau
+}, 'MNDWI - Eau', false);
+
+// Classification simple des zones urbaines (NDBI > 0.2)
+var zonesUrbaines = ndbi.gt(0.25).selfMask();
+Map.addLayer(zonesUrbaines, {
+  palette: ['red'],
+  opacity: 0.6
+}, 'Zones Urbaines (NDBI > 0.2)', false);
+
+// =============================================================================
+// SECTION 11: GRAPHIQUES ET HISTOGRAMMES
+// =============================================================================
+
+print('═══════════════════════════════════════════════════════════');
+print('GRAPHIQUES DE DISTRIBUTION');
+print('═══════════════════════════════════════════════════════════');
+
+// Fonction pour créer un histogramme stylisé
+function creerHistogramme(image, nomIndice, region, couleur) {
+  return ui.Chart.image.histogram({
+    image: image.select(nomIndice),
+    region: region,
+    scale: 1000,
+    maxBuckets: 100,
+    minBucketWidth: 0.01
+  }).setOptions({
+    title: 'Distribution de l\'indice ' + nomIndice + ' - Burkina Faso ' + CONFIG.anneeCible,
+    titleTextStyle: {fontSize: 16, bold: true},
+    hAxis: {
+      title: 'Valeur de ' + nomIndice,
+      titleTextStyle: {fontSize: 14},
+      gridlines: {color: '#e0e0e0'}
+    },
+    vAxis: {
+      title: 'Fréquence (nombre de pixels)',
+      titleTextStyle: {fontSize: 14},
+      gridlines: {color: '#e0e0e0'}
+    },
+    colors: [couleur],
+    legend: {position: 'none'},
+    chartArea: {width: '75%', height: '70%'},
+    backgroundColor: '#f8f9fa'
+  });
+}
+
+// Histogrammes pour chaque indice principal
+var chartNDBI = creerHistogramme(indicesUrbanisation, 'NDBI', bfa_border.geometry(), '#e74c3c');
+var chartIBI = creerHistogramme(indicesUrbanisation, 'IBI', bfa_border.geometry(), '#3498db');
+var chartUI = creerHistogramme(indicesUrbanisation, 'UI', bfa_border.geometry(), '#f39c12');
+var chartNDVI = creerHistogramme(indicesUrbanisation, 'NDVI', bfa_border.geometry(), '#27ae60');
+var chartMNDWI = creerHistogramme(indicesUrbanisation, 'MNDWI', bfa_border.geometry(), '#16a085');
+
+print(chartNDBI);
+print(chartIBI);
+print(chartUI);
+print(chartNDVI);
+print(chartMNDWI);
+
+// Graphique comparatif des moyennes régionales
+var chartComparaisonRegions = ui.Chart.feature.byFeature({
+  features: statsRegionsNDBI,
+  xProperty: 'nom_territoire',
+  yProperties: ['moyenne', 'mediane']
+}).setChartType('ColumnChart')
+.setOptions({
+  title: 'Comparaison NDBI par Région - Moyenne vs Médiane',
+  titleTextStyle: {fontSize: 16, bold: true},
+  hAxis: {
+    title: 'Régions',
+    titleTextStyle: {fontSize: 14},
+    slantedText: true,
+    slantedTextAngle: 45
+  },
+  vAxis: {
+    title: 'Valeur NDBI',
+    titleTextStyle: {fontSize: 14}
+  },
+  series: {
+    0: {color: '#e74c3c', label: 'Moyenne'},
+    1: {color: '#3498db', label: 'Médiane'}
+  },
+  chartArea: {width: '70%', height: '60%'}
+});
+
+print(chartComparaisonRegions);
+
+// =============================================================================
+// SECTION 12: ANALYSE DE CORRÉLATION
+// =============================================================================
+
+print('═══════════════════════════════════════════════════════════');
+print('ANALYSE DE CORRÉLATION ENTRE INDICES');
+print('═══════════════════════════════════════════════════════════');
+
+// Échantillonnage pour analyse de corrélation
+var echantillon = indicesUrbanisation.sample({
+  region: bfa_border.geometry(),
+  scale: CONFIG.echelle * 5,
+  numPixels: 5000,
+  seed: 42,
+  geometries: false
+});
+
+// Graphique de corrélation NDBI vs NDVI
+var scatterNDBIvsNDVI = ui.Chart.feature.byFeature(echantillon, 'NDVI', 'NDBI')
+  .setChartType('ScatterChart')
+  .setOptions({
+    title: 'Corrélation NDBI vs NDVI',
+    titleTextStyle: {fontSize: 16, bold: true},
+    hAxis: {title: 'NDVI (Végétation)', titleTextStyle: {fontSize: 14}},
+    vAxis: {title: 'NDBI (Zones Bâties)', titleTextStyle: {fontSize: 14}},
+    pointSize: 2,
+    colors: ['#2ecc71'],
+    trendlines: {0: {color: '#e74c3c', lineWidth: 3, opacity: 0.5}},
+    chartArea: {width: '75%', height: '70%'}
+  });
+
+print(scatterNDBIvsNDVI);
+
+// =============================================================================
+// SECTION 13: EXPORT DES RASTERS
+// =============================================================================
+
+// Export de l'image composite des indices
+Export.image.toDrive({
+  image: indicesUrbanisation.toFloat(),
+  description: 'BFA_Indices_Urbanisation_' + CONFIG.anneeCible,
+  scale: CONFIG.echelle,
+  region: bfa_border.geometry(),
+  maxPixels: 1e13,
+  crs: 'EPSG:4326'
+});
+
+print('═══════════════════════════════════════════════════════════');
+print('SCRIPT TERMINÉ AVEC SUCCÈS');
+print('Consultez l\'onglet Tasks pour lancer les exports');
+print('═══════════════════════════════════════════════════════════');
