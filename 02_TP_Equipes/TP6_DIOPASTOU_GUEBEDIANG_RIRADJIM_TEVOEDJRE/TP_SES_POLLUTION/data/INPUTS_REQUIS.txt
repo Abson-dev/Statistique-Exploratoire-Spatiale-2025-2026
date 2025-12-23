@@ -1,0 +1,45 @@
+FICHIERS D'ENTRÉE REQUIS - TP_SES_POLLUTION
+================================================================================
+
+Ce dossier doit contenir les fichiers de données suivants pour que les 
+scripts puissent s'exécuter correctement.
+
+SHAPEFILES (Données spatiales vectorielles)
+--------------------------------------------------------------------------------
+1. mli_admin_boundaries.shp (dossier contenant les fichiers shp)
+
+FICHIERS CSV
+--------------------------------------------------------------------------------
+1. Indices_Spectraux_Mali_2021_clean.csv
+2. ehcvm_menage_mli2021.csv
+
+FICHIERS GEOJSON
+--------------------------------------------------------------------------------
+1. Indices_Mali_2021.geojson
+2. Indices_Mali_2021_clean.geojson
+
+================================================================================
+INSTRUCTIONS:
+
+1. Récupérez ces fichiers
+2. Placez-les dans CE dossier 'data'
+3. Ne renommez AUCUN fichier
+4. Pour les shapefiles: copiez TOUS les fichiers (.shp, .shx, .dbf, .prj, .cpg)
+5. Vérifiez les extensions
+
+SOURCES POSSIBLES:
+Shapefiles Mali:
+  - GADM: https://gadm.org/download_country.html
+  - HDX: https://data.humdata.org/ (rechercher "Mali administrative")
+  
+Rasters Sentinel-2:
+  - Google Earth Engine (bandes B2, B3, B4, B8, B11)
+  - Copernicus Open Access Hub
+  - Les auteurs du projet
+  
+Données EHCVM (enquête ménages Mali):
+  - ANSD/INSTAT Mali
+
+================================================================================
+IMPORTANT: Les scripts ont été modifiés pour utiliser des chemins 
+relatifs pointant vers ce dossier './data/'

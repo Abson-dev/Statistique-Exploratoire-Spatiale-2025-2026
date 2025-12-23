@@ -1,0 +1,19 @@
+Analyse indirecte de la pollution à partir des indices Sentinel-2
+
+La pollution n’a pas été mesurée directement dans cette étude. Elle a été analysée de manière indirecte, à partir d’indices spectraux Sentinel-2 permettant d’identifier la pression anthropique et ses effets environnementaux.
+
+Les indices NDBI et UI, utilisés pour caractériser l’urbanisation, présentent des valeurs moyennes respectives de 0,124 et 1,294, indiquant une présence notable de surfaces bâties sur les entités étudiées. Leur corrélation très élevée (r = 0,996) confirme une urbanisation marquée, considérée comme une source majeure de pollution (trafic, activités domestiques, gestion des déchets).
+
+Les indices de végétation NDVI et SAVI affichent des valeurs moyennes modérées (NDVI = 0,198 ; SAVI = 0,297), traduisant une végétation présente mais globalement sous stress. Les corrélations négatives observées entre l’urbanisation et la végétation (r ≈ -0,66) suggèrent une dégradation progressive des milieux végétalisés dans les zones les plus anthropisées, compatible avec des effets indirects de la pollution et de l’artificialisation.
+
+Enfin, l’indice NDMI présente une moyenne négative (-0,124), révélant un déficit hydrique des sols et de la végétation. Sa corrélation négative quasi parfaite avec le NDBI (r = -1,00) montre que les zones urbanisées sont également les plus affectées par le stress hydrique.
+Dans l’ensemble, la combinaison de niveaux élevés d’urbanisation, d’une végétation affaiblie et d’un déficit hydrique permet d’identifier une signature spatiale cohérente de la pollution indirecte, comprise comme l’impact environnemental global des activités humaines sur les territoires étudiés.
+
+
+Les statistiques descriptives montrent des valeurs moyennes cohérentes des indices Sentinel-2, compatibles avec les caractéristiques environnementales du territoire étudié.
+Les indices de végétation (NDVI et SAVI) présentent une corrélation quasi parfaite, ce qui est attendu compte tenu de leur formulation similaire. 
+Le NDBI est fortement corrélé positivement à l’UI, suggérant que les zones identifiées comme urbanisées par un indice le sont également par l’autre. À l’inverse, ces indices sont négativement corrélés aux indices de végétation, traduisant l’opposition classique entre surfaces bâties et couvert végétal.
+
+Le NDMI apparaît fortement opposé au NDBI, indiquant que les zones plus urbanisées ou artificialisées sont généralement associées à une plus faible humidité de surface.
+Dans l’ensemble, les relations observées entre indices sont physiquement cohérentes.
+Les résultats suggèrent au mieux des tendances globales possibles, sans permettre d’inférences fines sur les ménages ou les individus.

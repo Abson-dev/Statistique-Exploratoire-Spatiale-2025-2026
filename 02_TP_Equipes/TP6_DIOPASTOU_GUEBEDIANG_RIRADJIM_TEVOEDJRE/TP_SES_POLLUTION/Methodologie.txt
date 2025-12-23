@@ -1,0 +1,30 @@
+MÉTHODOLOGIE
+Cette étude repose sur une approche exploratoire et descriptive, visant à analyser conjointement des indices environnementaux issus de l’imagerie Sentinel-2 et des indicateurs de conditions de vie des ménages provenant de l’enquête EHCVM 2021 au Mali.
+
+Données utilisées
+Deux sources de données ont été mobilisées :
+Indices Sentinel-2, calculés à partir d’images satellitaires et agrégés par unités spatiales administratives. Les indices retenus sont :
+NDVI (Normalized Difference Vegetation Index), indicateur de la densité de la végétation ;
+NDBI (Normalized Difference Built-up Index), associé aux surfaces artificialisées ;
+NDMI (Normalized Difference Moisture Index), reflétant l’humidité de surface ;
+SAVI (Soil Adjusted Vegetation Index), variante du NDVI ajustée à l’influence du sol ;
+UI (Urban Index), indicateur composite d’urbanisation.
+Données EHCVM 2021, issues d’une enquête auprès des ménages, décrivant plusieurs dimensions des conditions de vie : accès à l’électricité, type de toilettes, gestion des ordures et taille moyenne des ménages.
+
+Prétraitements
+Les données EHCVM ont été nettoyées et agrégées par grappe, afin d’obtenir des indicateurs moyens représentatifs à un niveau spatial comparable à celui des indices satellitaires.
+L’export des indices Sentinel-2 depuis Google Earth Engine présentait des irrégularités de format. Un travail de reconstruction du fichier a été réalisé afin de :
+identifier correctement les colonnes d’indices,
+convertir les géométries GeoJSON en objets spatiaux valides,
+éliminer les entités géométriques invalides.
+Toutes les données ont été harmonisées (types numériques, noms de colonnes, projections spatiales).
+
+Analyses
+L’analyse s’est concentrée sur :
+des statistiques descriptives (moyennes, dispersion, distributions) des indices Sentinel ;
+l’étude des corrélations internes entre indices afin d’évaluer leur cohérence physique ;
+une lecture comparative des ordres de grandeur entre indices environnementaux et indicateurs socio-économiques.
+Aucune modélisation causale n’a été entreprise. Les analyses sont volontairement limitées à une interprétation macro-spatiale.
+
+Limites méthodologiques
+L’absence d’un appariement spatial fin entre ménages et pixels satellitaires impose une lecture prudente des résultats. Les conclusions doivent être interprétées comme exploratoires, et non comme des relations causales établies.

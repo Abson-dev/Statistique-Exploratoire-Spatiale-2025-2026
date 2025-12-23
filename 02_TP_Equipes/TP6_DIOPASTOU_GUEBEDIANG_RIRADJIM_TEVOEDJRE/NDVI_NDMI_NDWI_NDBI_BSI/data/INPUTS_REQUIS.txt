@@ -1,0 +1,54 @@
+FICHIERS D'ENTRÉE REQUIS - NDVI_NDMI_NDWI_NDBI_BSI
+================================================================================
+
+Ce dossier doit contenir les fichiers de données suivants pour que les 
+scripts puissent s'exécuter correctement.
+
+SHAPEFILES (Données spatiales vectorielles)
+--------------------------------------------------------------------------------
+1. mli_admin0.shp
+N'oubliez pas: mli_admin0.shx, mli_admin0.dbf, mli_admin0.prj
+2. mli_admin1.shp
+N'oubliez pas: mli_admin1.shx, mli_admin1.dbf, mli_admin1.prj
+3. mli_admin2.shp
+N'oubliez pas: mli_admin2.shx, mli_admin2.dbf, mli_admin2.prj
+
+RASTERS (Images satellitaires)
+--------------------------------------------------------------------------------
+1. Mali_2022_B11_100m.tif
+2. Mali_2022_B2_100m.tif
+3. Mali_2022_B3_100m.tif
+4. Mali_2022_B4_100m.tif
+5. Mali_2022_B8_100m.tif
+
+FICHIERS STATA (Données d'enquête EHCVM)
+--------------------------------------------------------------------------------
+1. s00_me_MLI2021.dta
+
+================================================================================
+INSTRUCTIONS:
+
+1. Demandez ces fichiers aux auteurs du projet
+2. Placez-les dans CE dossier 'data'
+3. Ne renommez AUCUN fichier
+4. Pour les shapefiles: copiez TOUS les fichiers (.shp, .shx, .dbf, .prj, .cpg)
+5. Vérifiez les extensions
+
+SOURCES POSSIBLES:
+
+Shapefiles Mali:
+  - GADM: https://gadm.org/download_country.html
+  - HDX: https://data.humdata.org/ (rechercher "Mali administrative")
+  
+Rasters Sentinel-2:
+  - Google Earth Engine (bandes B2, B3, B4, B8, B11)
+  - Copernicus Open Access Hub
+  - Les auteurs du projet
+  
+Données EHCVM (enquête ménages Mali):
+  - ANSD/INSTAT Mali
+  - Les auteurs du projet
+
+================================================================================
+IMPORTANT: Les scripts ont été modifiés pour utiliser des chemins 
+relatifs pointant vers ce dossier './data/'
