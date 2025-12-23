@@ -25,35 +25,60 @@ Exporter uniquement les résultats agrégés (tables CSV) et les cartes finales
 **Classe :** ISE1 CL  
 **Année académique :** 2025-2026
 
-## Structure du Projet (sur Google Earth Engine et en local)
 TP6_Niger_Indices_EHCVM/
 │
-├── gee_project/
-│   ├── script_principal.js                 # Script GEE complet (analyse + exports)
-│   ├── exports/                            # Dossiers d'export GEE (Drive)
-│   │   ├── Niger_Stats_Departements_2022.csv
-│   │   ├── Niger_Stats_Regions_2022.csv
-│   │   ├── Niger_Template_EHCVM_2022.csv
-│   │   ├── rasters/ (NDVI, EVI, NDWI, NDMI, MDVI, LST, bandes S2)
-│   └── lien_acces_gee.txt                  # Lien vers le projet GEE partagé
+├── gee/
+│   ├── scripts/
+│   │   └── main_indices_export.js          # Script GEE principal (indices + stats + exports)
+│   │
+│   ├── exports_drive/                      # Exports générés depuis GEE (Google Drive)
+│   │   ├── tables/
+│   │   │   ├── niger_stats_departements_2022.csv
+│   │   │   ├── niger_stats_regions_2022.csv
+│   │   │   └── niger_template_ehcvm_2022.csv
+│   │   │
+│   │   └── rasters/
+│   │       ├── ndvi_2022.tif
+│   │       ├── evi_2022.tif
+│   │       ├── ndwi_2022.tif
+│   │       ├── ndmi_2022.tif
+│   │       ├── mdvi_2022.tif
+│   │       ├── lst_2022.tif
+│   │       └── sentinel2_bands/
+│   │
+│   └── lien_projet_gee.txt                 # Lien vers le script/projet GEE partagé
 │
-├── data_local/                             # Données importées/transformées localement
+├── data/
 │   ├── boundaries/
-│   │   ├── geoBoundaries-NER-ADM0-all.zip # Limite nationale
-│   │   ├── geoBoundaries-NER-ADM1-all.zip # Régions
-│   │   ├── geoBoundaries-NER-ADM2-all.zip # Départements
-│   │   └── geoBoundaries-NER-ADM3-all.zip # Communes (non utilisées ici)
+│   │   ├── ADM0_pays/
+│   │   │   └── geoBoundaries-NER-ADM0.zip
+│   │   ├── ADM1_regions/
+│   │   │   └── geoBoundaries-NER-ADM1.zip
+│   │   ├── ADM2_departements/
+│   │   │   └── geoBoundaries-NER-ADM2.zip
+│   │   └── ADM3_communes/                  # Non utilisé dans ce TP
+│   │       └── geoBoundaries-NER-ADM3.zip
 │   │
 │   └── ehcvm/
-│       ├── ehcvm_welfare_n_er2021.dta      # Données EHCVM originales (Stata)
-│       └── ehcvm_welfare_n_er2021.csv      # Version convertie pour GEE
+│       ├── raw/
+│       │   └── ehcvm_welfare_ner_2021.dta  # Données EHCVM originales
+│       │
+│       └── gee_ready/
+│           └── ehcvm_welfare_ner_2021.csv  # Version convertie pour jointure GEE
 │
-├── outputs_local/                          # Exports locaux (si traitements complémentaires)
-│   ├── cartes_choroplethes/
-│   ├── statistiques_fusionnees/
+├── outputs/
+│   ├── cartes/
+│   │   └── choroplethes/
+│   │
+│   ├── statistiques/
+│   │   └── ehcvm_indices_fusionnes.csv
+│   │
 │   └── rapports/
+│       ├── rapport_final.pdf
+│       └── figures/
 │
-└── README.md                               # Ce fichier
+└── README.md
+
 
 ## Données Utilisées
 ### Données satellitaires (chargées directement dans GEE)
@@ -181,4 +206,5 @@ Projet académique réalisé dans le cadre du cours de Statistique Spatiale à l
 Les données satellitaires sont ouvertes (Sentinel-2, MODIS).  
 
 Les données EHCVM sont fournies par l'INS Niger pour usage académique.
+
 
