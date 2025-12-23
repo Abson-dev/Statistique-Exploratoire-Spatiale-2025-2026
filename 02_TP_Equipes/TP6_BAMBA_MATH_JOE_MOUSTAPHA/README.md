@@ -3,6 +3,7 @@
 
 ## Description du Projet
 Ce TP6 vise à calculer, analyser et cartographier des indices spectraux (NDVI, EVI, NDWI, NDMI, MDVI) et la température de surface (LST) pour le Niger, à partir d'images Sentinel-2 et MODIS, sur la période juin-septembre 2022. L'objectif est de produire des données spatialisées exploitables pour des études socio-environnementales, notamment via une fusion avec les données de l'enquête EHCVM (Enquête Harmonisée sur le Bien-être des Ménages).
+
 Contrainte technique majeure : Le traitement des images satellitaires (Sentinel-2, MODIS) nécessite habituellement le téléchargement de centaines de gigaoctets de données. Avec nos contraintes de stockage (disques durs limités, quotas Google Drive insuffisants), cette approche traditionnelle était impossible.
 
 Solution adoptée : Google Earth Engine (GEE) nous a permis de :
@@ -180,4 +181,5 @@ text
 ## Licence
 Projet académique réalisé dans le cadre du cours de Statistique Spatiale à l'ENSAE-ISEP.  
 Les données satellitaires sont ouvertes (Sentinel-2, MODIS).  
+
 Les données EHCVM sont fournies par l'INS Niger pour usage académique.
