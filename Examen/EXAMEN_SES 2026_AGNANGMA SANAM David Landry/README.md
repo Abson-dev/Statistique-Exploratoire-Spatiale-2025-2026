@@ -11,7 +11,6 @@ Ce projet réalise une analyse statistique et spatiale des données agricoles de
 
 ## Structure du projet
 ```
-projet_agriculture/
 ├── data/
 ├── outputs/ # Résultats et visualisations
 ├── scripts/
@@ -48,4 +47,5 @@ projet_agriculture/
 - Calcul de l'indice de Moran
 
 # Auteur
+
 David Landry SANAM
