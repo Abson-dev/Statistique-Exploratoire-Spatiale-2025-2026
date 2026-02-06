@@ -129,7 +129,7 @@ map_data <- map %>%
 
 *1.a Décrivons l'unité statistique d'observation:*
 
-Ce que nous étudions ici, c'est le **rendement agricole** de différentes **cultures agricoles**, cultivées dans plusieurs **départements** de plusieurs pays différents à des mois, années, et périodes différentes. On peut donc dire que c'est la **culture agricole** notre unité d'observation.
+Ce que nous étudions ici, c'est le **rendement agricole** de différentes **cultures agricoles**, cultivées dans plusieurs **départements** de plusieurs pays différents à des mois, années, et périodes différentes. On peut donc dire que c'est la **culture agricole** notre unité d'observation. Et qu'elle est observé suivant sa localisation spatiale (pays, région, département) et temporelle (année, mois, saison).
 
 - La variables fnid : Permet l'identification unique de chaque pays
 - La variable admin_1 : Permet d'identifier la région
@@ -231,6 +231,7 @@ sn_yield_region <- sn_map_data %>%
 sn_yield_region
 
 ```
+
 
 
 **Proposons une méthodologie d'analyse spatiale **
