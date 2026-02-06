@@ -1,0 +1,97 @@
+"country","product","n_observations","moyenne","mediane","ecart_type"
+"Benin","Cassava",456,12.58,12.49,3.47
+"Benin","Potato",51,12.13,11.08,5.68
+"Benin","Yams",286,12.09,11.97,3.55
+"Benin","Lettuce",239,10.9,10,5.15
+"Benin","Eggplant",367,10.43,8.77,5.66
+"Benin","Onions",143,9.88,8.82,5.63
+"Benin","Tomato",456,7.61,6.41,4.93
+"Benin","Sweet Potatoes",436,5.97,5.88,2.83
+"Benin","Okras",429,3.54,3.06,1.78
+"Benin","Taro",132,3.34,2.52,2.38
+"Benin","Rice",388,3.12,2.97,0.93
+"Benin","Maize",456,1.25,1.13,0.39
+"Benin","Soybean",332,1.04,0.9,0.38
+"Benin","Groundnuts (In Shell)",449,0.95,0.86,0.29
+"Benin","Millet",168,0.92,0.88,0.25
+"Benin","Sorghum",234,0.9,0.93,0.23
+"Benin","Cowpea",451,0.85,0.8,0.24
+"Benin","Bambara groundnut",248,0.83,0.84,0.22
+"Benin","Goussi",259,0.7,0.64,0.23
+"Benin","Pigeon Pea",217,0.66,0.61,0.24
+"Benin","Fonio",35,0.6,0.57,0.19
+"Benin","Geocarpa groundnut",98,0.58,0.59,0.11
+"Benin","Sesame Seed",85,0.55,0.55,0.21
+"Burkina Faso","Potato",17,22.87,29,10.56
+"Burkina Faso","Sweet Potatoes",111,10.24,7.51,13.14
+"Burkina Faso","Yams",60,6.24,5.76,4.09
+"Burkina Faso","Soybean",170,3.58,0.98,26.24
+"Burkina Faso","Rice",629,1.99,1.76,1.04
+"Burkina Faso","Maize",367,1.7,1.52,0.93
+"Burkina Faso","Bambara groundnut",272,1.53,0.97,2.53
+"Burkina Faso","Sorghum (Red)",232,1.08,1.06,0.35
+"Burkina Faso","Cotton",164,1.06,1.05,0.38
+"Burkina Faso","Sorghum",276,1.02,1,0.3
+"Burkina Faso","Millet",276,0.92,0.86,0.35
+"Burkina Faso","Groundnuts (In Shell)",275,0.8,0.81,0.23
+"Burkina Faso","Fonio",43,0.7,0.65,0.37
+"Burkina Faso","Sesame Seed",268,0.65,0.57,0.31
+"Burkina Faso","Cowpea",267,0.61,0.52,0.52
+"Mali","Wheat",11,4.56,4,1.97
+"Mali","Rice",42,3.27,2.96,1
+"Mali","Maize",36,2.42,2.49,0.89
+"Mali","Cotton",20,0.93,0.95,0.09
+"Mali","Sorghum",40,0.92,0.94,0.2
+"Mali","Groundnuts (In Shell)",41,0.83,0.86,0.16
+"Mali","Millet",42,0.83,0.88,0.19
+"Mali","Bambara groundnut",30,0.62,0.65,0.13
+"Mali","Fonio",30,0.6,0.59,0.21
+"Mali","Soybean",15,0.59,0.65,0.17
+"Mali","Sesame Seed",25,0.5,0.49,0.13
+"Mali","Cowpea",47,0.44,0.42,0.09
+"Niger","Sugarcane",79,37.45,37.14,8.93
+"Niger","Onions",244,27.58,28.13,8.07
+"Niger","Cabbage",246,25.6,26.5,8.19
+"Niger","Sweet Potatoes",148,25.1,24.6,5.65
+"Niger","Potato",231,25.09,24.23,5.74
+"Niger","Squash",206,25.04,23.92,10.15
+"Niger","Cassava",198,24.31,24.25,7.12
+"Niger","Tomato",247,21.7,22,6.62
+"Niger","Watermelon",139,19.87,20.99,8.72
+"Niger","Rape",111,19.64,18.55,12.46
+"Niger","Carrots",202,19.6,20.32,16.75
+"Niger","Lettuce",246,18.91,17.8,6.39
+"Niger","Melon",124,17.9,17.66,5.55
+"Niger","Tobacco",38,17.78,16.43,5.63
+"Niger","Capsicum Chinense",193,16.91,17.24,9.43
+"Niger","Eggplant",73,16.33,18.36,7.03
+"Niger","Celery",2,13.08,13.08,0.09
+"Niger","Garlic",85,10.5,12.5,5.64
+"Niger","Cucumber",10,9.82,8.82,6.17
+"Niger","Chili Pepper",131,9.35,7.92,6.19
+"Niger","Okras",176,6.72,3.91,6.48
+"Niger","Coriander",4,4.12,4.05,0.27
+"Niger","Rice",112,3.21,2.6,1.99
+"Niger","Bean (Hyacinth)",40,2.17,1.87,2.17
+"Niger","Wheat",125,2.04,1.97,1.2
+"Niger","Pea",2,1.92,1.92,0.01
+"Niger","Maize",291,1.39,1,0.91
+"Niger","Sorghum",275,0.81,0.59,1.05
+"Niger","Cowpea",346,0.77,0.46,0.6
+"Niger","Groundnuts (In Shell)",163,0.61,0.54,0.26
+"Niger","Bambara groundnut",126,0.52,0.5,0.12
+"Niger","Millet",177,0.51,0.51,0.12
+"Niger","Fonio",20,0.49,0.52,0.08
+"Niger","Sesame Seed",122,0.45,0.43,0.11
+"Niger","Sorrel",150,0.38,0.34,0.23
+"Togo","Yams",25,8.49,8.79,1.98
+"Togo","Cassava",29,4.43,4.5,1.49
+"Togo","Rice",19,1.48,1.28,0.53
+"Togo","Maize",29,1.39,1.56,0.49
+"Togo","Sorghum",21,0.75,0.76,0.15
+"Togo","Millet",18,0.7,0.67,0.17
+"Togo","Beans (mixed)",17,0.59,0.5,0.38
+"Togo","Groundnuts (In Shell)",28,0.59,0.55,0.17
+"Togo","Cotton",3,0.57,0.76,0.43
+"Togo","Cowpea",12,0.52,0.54,0.07
+"Togo","Soybean",21,0.43,0.44,0.23
