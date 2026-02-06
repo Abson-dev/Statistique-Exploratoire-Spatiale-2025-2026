@@ -1,0 +1,2 @@
+"gpkg_path","gpkg_layer","gpkg_n_features","gpkg_crs","csv_path","csv_n_rows","csv_n_cols","harvest_year_min","harvest_year_max"
+"C:/Users/admin/Pictures/DEVOIR/DOSSIER_EVALUATION/data/hvstat_africa_boundary.gpkg","hvstat_africa_boundary_v1.0","1109","WGS 84","C:/Users/admin/Pictures/DEVOIR/DOSSIER_EVALUATION/data/hvstat_africa_data.csv","203125","16","1960","2024"

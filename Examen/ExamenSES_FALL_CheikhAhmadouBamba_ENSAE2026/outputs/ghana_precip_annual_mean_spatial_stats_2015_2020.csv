@@ -1,0 +1,2 @@
+country,period_start,period_end,variable,unit,spatial_mean,spatial_variance,spatial_stdDev,spatial_CV
+Ghana,2015-01-01,2020-12-31,mean_annual_precipitation,mm/year,1048.9377976648166,94587.22192291473,307.55035672701587,0.2932017107322242
