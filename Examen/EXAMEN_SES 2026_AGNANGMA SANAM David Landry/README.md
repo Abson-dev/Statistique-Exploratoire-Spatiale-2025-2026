@@ -10,13 +10,14 @@ Ce projet réalise une analyse statistique et spatiale des données agricoles de
 4. Réaliser une analyse spatiale (matrices de voisinage et indice de Moran)
 
 ## Structure du projet
+```
 projet_agriculture/
 ├── data/
 ├── outputs/ # Résultats et visualisations
 ├── scripts/
 ├── README.md
 └── environnement.R (rproj)
-text
+```
 
 ## Données utilisées
 
@@ -47,5 +48,4 @@ text
 - Calcul de l'indice de Moran
 
 # Auteur
-
 David Landry SANAM
