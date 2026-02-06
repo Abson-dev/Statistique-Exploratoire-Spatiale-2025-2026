@@ -195,7 +195,8 @@ moran.plot(y, lw_ok, zero.policy = TRUE)
 #sample estimates:
 #  Moran I statistic       Expectation          Variance 
 #       -0.03141638       -0.33333333        0.47406678 
-#On a un I faible et négative, cela indique une faible spatiale autocorrellation négative
+#On a un I faible et négative, cela indique une faible autocorrellation spatiale négative
+
 
 
 
