@@ -1,4 +1,4 @@
-# Projet : Analyse Spatiale des Données Agricoles en Afrique Subsaharienne
+# Projet : Analyse spatiale des données agricoles en Afrique subsaharienne
 
 ## Description du projet
 Ce projet réalise une analyse statistique et spatiale des données agricoles de l'Afrique subsaharienne en utilisant le jeu de données HarvestStat Africa. L'étude se concentre particulièrement sur cinq pays d'Afrique de l'Ouest : Bénin, Burkina Faso, Mali, Niger et Togo.
@@ -47,4 +47,5 @@ text
 - Calcul de l'indice de Moran
 
 # Auteur
+
 David Landry SANAM
