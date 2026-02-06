@@ -1,0 +1,236 @@
+---
+title: "Examen de statistiques exploratoires spatiale"
+author: "David NGUEAJIO"
+date: "2026-02-06"
+output: pdf_document
+---
+
+Nous commençons en important les bibliothèques de travail qui seront nécessaires ainsi que les jeux de données.
+
+
+```{r setup, include=FALSE}
+library(sf)
+library(tidyverse)
+
+## Charger les dataframes avec indicateurs
+
+data <- read_csv("data/hvstat_africa_data_v1.0.csv")
+
+## Charger les données géographiques
+
+map <- st_read("data/hvstat_africa_boundary_v1.0.gpkg")
+```
+
+Avant toute analyse, commençons par explorer notre jeu de données.
+
+```{r}
+## On explore le géopackage
+
+glimpse(map)        
+colnames(map)
+colSums(is.na(map))
+st_layers("data/hvstat_africa_boundary_v1.0.gpkg")
+
+
+ggplot(map) +
+    geom_sf(aes())          # On visualise la carte en Afrique
+
+```
+On observe que pour certains pays, il n'y a pas de géométrie au niveau départemental (c'est le cas par exemple de l'Angola);
+La résolution de travail est le WGS 84;
+Et ce fichier géopackage ne contient qu'une seule couche.
+
+
+```{r}
+## On va vérifier 
+
+glimpse(data)
+colnames(data)
+colSums(is.na(data))
+
+```
+Ici, il y'a des valeurs manquantes sur la surface cultivée, la production et le rendement. Il faudra en tenir compte pour la suite. 
+
+Nous contruisons la base de données d'analyse géospatiale. Pour celà, il nous faut une clé de jointure, tenant compte des 02 niveaux administratifs présents. Nous construisons alors la variable key = "country_region_dept".
+
+Commençons par nettoyer les bases de données.
+
+```{r}
+
+# Nettoyage et harmonisation des bases de données
+
+map <- map %>%
+    mutate(
+        country = str_to_lower(ADMIN0),
+        region = str_to_lower(ADMIN1),
+        dept = str_to_lower(ADMIN2)
+    ) 
+data <- data %>%
+    mutate(
+        country = str_to_lower(country),
+        region = str_to_lower(admin_1),
+        dept = str_to_lower(admin_2)
+    )
+
+
+# On remplace les "na" par le "none" qui est la modalité équivalente dans data (pour les départements).
+
+map <- map %>%
+    mutate(
+        country = replace_na(country, "none"),
+        region  = replace_na(region,  "none"),
+        dept    = replace_na(dept,    "none")
+    )
+
+```
+
+Maintenant, construisons la clé de fusion dans data et map.
+
+```{r}
+### Clé de fusion dans map
+
+map <- map %>%
+    unite("key",
+          country, region, dept,
+          sep="_",
+          remove=FALSE)
+
+### Clé de fusion dans data
+data <- data %>%
+    mutate(across(c(country, region, dept),
+                  ~replace_na(.,"none"))) %>%
+    unite("key",
+          country, region, dept,
+          sep="_",
+          remove=FALSE)
+
+### On ajoute d'un identifiant unique de donnée de panel pour vérifier la cohérence post fusion.
+
+data <- data %>%
+    mutate(panel_id =
+               paste(key, product,
+                     planting_year,
+                     harvest_year,
+                     sep="_"))
+
+```
+
+On fait enfin la fusion pour créer la base d'analyse géospatiale.
+
+```{r}
+# Base geospatiale
+map_data <- map %>%
+    left_join(data, by="key")
+```
+
+
+# PARTIE 1: Analyse du rendement agricole en Afrique de l'Ouest à partir des données HarveyStats
+
+
+*1.a Décrivons l'unité statistique d'observation:*
+
+Ce que nous étudions ici, c'est le **rendement agricole** de différentes **cultures agricoles**, cultivées dans plusieurs **départements** de plusieurs pays différents à des mois, années, et périodes différentes. On peut donc dire que c'est la **culture agricole** notre unité d'observation.
+
+- La variables fnid : Permet l'identification unique de chaque pays
+- La variable admin_1 : Permet d'identifier la région
+- La variable admin_2 : Permet d'identifier le département (ou l'unité administrative du pays)
+- La variable product : Donne le nom du produit
+- La variable season_name : Indique la saison de culture
+
+*1.b La différence conceptuelle entre area, production et yield.*
+
+"area" représente la superficie (en hectare) sur laquelle est produite une denrée agricole donnée. "production" fait ainsi référence à la quantité en tonne de cette production. "yield" est le rendement agricole. Il permet de comparer l'éfficacité de la production agricole, entre plusieurs zones distinctes et plusieurs produits.
+
+On a **yield = production / area **
+
+**2. Analysons la distribution de qc_flag par pays et par culture.**
+
+Les pays d'analyses sont le Bénin, le Burkina Faso, le Mali, le Togo et le Niger. Nous commençons par prendre l'année de référence 2015.
+
+Commençons par le Benin.
+
+```{r name}
+ggplot(
+    filter(map_data,
+           harvest_year == 2015 & country.x == "benin")
+) +
+    geom_sf(aes(fill = qc_flag))
+
+```
+
+En 2017, toutes les données sont fiables quelques soient la régions d'analyse. Passons donc Burkina Faso
+
+
+```{r}
+ggplot(
+    filter(map_data,
+           harvest_year == 2015 & country.x == "burkina faso")
+) +
+    geom_sf(aes(fill = qc_flag))
+```
+Il en est de même pour le Burkina-Faso.
+
+```{r}
+ggplot(
+    filter(map_data,
+           harvest_year == 2015 & country.x == "mali")
+) +
+    geom_sf(aes(fill = qc_flag))
+```
+Pareil au Mali
+
+```{r}
+ggplot(
+    filter(map_data,
+           harvest_year == 2015 & country.x == "togo")
+) +
+    geom_sf(aes(fill = qc_flag))
+```
+Au Togo, il n'y a pas de donnée en 2017, mais celles de 2015 semblent indiquer que les informations du pays également sont fiables, quelques soient le produit. Observons maintenant au Niger.
+
+```{r}
+ggplot(
+    filter(map_data,
+           harvest_year == 2015 & country.x == "niger")
+) +
+    geom_sf(aes(fill = qc_flag)) +
+    geom_sf_text(aes(label = region.x))
+```
+Dans le cas du Niger par contre, on observe que si les données sont "ok" partout, à "Agadez" la variance est faible mais à noter.
+
+
+Pour les observations avec des variances faibles à forte, la meilleure stratégie est probablement d'employer la médiane au moment de l'agrégation.
+
+
+```{r}
+
+```
+
+
+
+**5. Analysons le rendement moyen par région au Sénégal de 2015 à 2020, pour le maïs.**
+
+On commence par construire la base d'analyse géospatiale pertinente ici pour le Sénégal.
+
+```{r}
+
+sn_map_data <- filter(map_data, country.x == "senegal" & product == "Maize")
+
+glimpse(sn_map_data)
+
+```
+Nous allons maintenant calculer le rendement moyen par région.
+
+```{r}
+sn_yield_region <- sn_map_data %>%
+    group_by(region.x) %>%
+    group_by(product) %>%
+    summary(production_s = sum(production),
+            area_s = sum(area))
+
+sn_yield_region
+
+```
+
+
+**Proposons une méthodologie d'analyse spatiale **
