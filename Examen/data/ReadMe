@@ -1,0 +1,18 @@
+L'Afrique subsaharienne est confrontée à une grave pénurie de données agricoles dans un contexte d'insécurité alimentaire élevée et d'écart important entre les rendements agricoles, ce qui rend les données sur la production agricole cruciales pour comprendre et améliorer les systèmes alimentaires. Pour combler cette lacune, HarvestStat Africa présente la plus grande compilation de statistiques agricoles infranationales et de séries chronologiques en accès libre pour toute l'Afrique subsaharienne. Sur la base des statistiques agricoles recueillies par le Réseau de systèmes d'alerte précoce contre la famine de l'USAID, les statistiques agricoles infranationales sont normalisées et calibrées entre les différentes unités administratives afin de produire des séries chronologiques cohérentes et continues. L'ensemble de données comprend 574 204 enregistrements, couvrant principalement la période de 1980 à 2022, et détaillant les quantités produites (en tonnes métriques ; mt), les superficies récoltées (en hectares ; ha) et les rendements (tonnes métriques par hectare ; t/ha) pour 33 pays et 94 types de cultures, y compris les principales céréales d'Afrique subsaharienne telles que le blé, le maïs, le riz, le sorgho, l'orge, le millet et le fonio. Ce nouvel ensemble de données améliore notre compréhension de l'influence de la variabilité et du changement climatiques sur la production agricole, facilite l'analyse des systèmes alimentaires infranationaux et aide à la prévision opérationnelle des rendements. En tant que ressource open source, il établit un précédent en matière de partage des statistiques agricoles infranationales afin d'éclairer la prise de décision et les efforts de modélisation.
+ 
+
+  Le dictionnaire des variables principales est rappelé ci-dessous :
+  - fnid : identifiant géographique unique (FEWS NET)
+  - country : pays
+  - country_code : code ISO
+  - admin_1 : unité administrative de premier niveau
+  - admin_2 : unité administrative de second niveau
+  - product : culture agricole (ex. maïs, sorgho, millet)
+  - season_name : saison de culture
+  - planting_year / planting_month : année / mois de semis
+  - harvest_year / harvest_month : année / mois de récolte
+  - crop_production_system : système de production (pluvial, irrigué, …)
+  - qc_flag : indicateur de qualité (0 = ok, 1 = valeur aberrante, 2 = faible variance)
+  - area : superficie cultivée (ha)
+  - production : production agricole (t)
+  - yield : rendement (t/ha)
