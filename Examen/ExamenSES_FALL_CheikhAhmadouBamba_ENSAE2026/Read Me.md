@@ -41,6 +41,8 @@ L’objectif du projet est de :
 ---
 
 ## Structure du Projet
+
+
 DOSSIER_EVALUATION/
 │
 ├── data/
@@ -51,13 +53,17 @@ DOSSIER_EVALUATION/
 │   ├── DEVOIR_SES_COMPLET.R               # Script R principal (analyse HarvestStat)
 │   ├── DEVOIR_GEE_PRECIPITATIONS.py       # Script Python (précipitations ERA5)
 │   └── .ipynb_checkpoints/                # Checkpoints Jupyter (le cas échéant)
+│       └── (fichiers temporaires de notebooks)
 │
-└── outputs/
+├── outputs/
 │   ├── hvstat_inspection_summary.csv
 │   ├── statistiques_descriptives_yield_par_pays_et_culture.csv
 │   ├── tableaux_analyse_qc_flag.xlsx
 │   ├── ghana_precip_annual_mean_spatial_stats_2015_2020.csv
 │   └── (autres fichiers générés automatiquement)
+│
+├── README.md                               # Description du projet et instructions
+└── .gitignore                              
 
 **Chemins utilisés dans ce devoir :**
 - **Données :** `C:/Users/admin/Pictures/DEVOIR/DOSSIER_EVALUATION/data/`
@@ -189,4 +195,5 @@ Bien que ce devoir permette une bonne prise en main des statistiques spatiales a
 ## Licence
 Projet académique (devoir sur table) - ISEP3 / ISE Cycle Long - Année 2025-2026.
 Les données HarvestStat Africa sont sous licence open source (FEWS NET/USAID).
+
 Les données ERA5 sont accessibles via Google Earth Engine (conditions d'utilisation de l'ECMWF).
